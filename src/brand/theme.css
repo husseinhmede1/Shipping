@@ -1,0 +1,58 @@
+/* ---------------------------------------------------------------------------
+   BRAND THEME — the only file you edit to re-skin this page.
+   The product is white-label, so every colour, font and shape lives here as a
+   CSS variable. Nothing else in the codebase should contain a hex value.
+
+   To re-brand for a different agency: change the values below. Nothing else.
+--------------------------------------------------------------------------- */
+
+:root {
+  /* -- brand ---------------------------------------------------------- */
+  --brand-primary: #0e2a47; /* deep navy — trust, logistics */
+  --brand-primary-soft: #1c3e64;
+  --brand-accent: #e08733; /* amber — CTAs, active states, highlights */
+  --brand-accent-soft: #f0a961;
+
+  /* -- neutrals (9 steps, dark -> light) ------------------------------ */
+  --neutral-950: #0b1220;
+  --neutral-900: #131c2b;
+  --neutral-800: #1b2733;
+  --neutral-700: #364150;
+  --neutral-500: #5a6875;
+  --neutral-300: #aab6c2;
+  --neutral-200: #d8dee5;
+  --neutral-100: #eef2f6;
+  --neutral-50: #f5f7fa;
+
+  /* -- status --------------------------------------------------------- */
+  --status-success: #1e8a80;
+  --status-warning: #c98a16;
+  --status-danger: #c4453c;
+
+  /* -- surfaces ------------------------------------------------------- */
+  --surface-page: var(--neutral-50);
+  --surface-card: #ffffff;
+  --surface-inverse: var(--brand-primary);
+  --text-strong: var(--neutral-900);
+  --text-body: var(--neutral-700);
+  --text-muted: var(--neutral-500);
+  --text-inverse: #ffffff;
+
+  /* -- type ----------------------------------------------------------- */
+  --font-heading: "Inter Tight Variable", system-ui, sans-serif;
+  --font-body: "Inter Variable", system-ui, sans-serif;
+
+  /* -- shape ---------------------------------------------------------- */
+  --radius-card: 12px;
+  --radius-input: 8px;
+  --radius-pill: 999px;
+
+  /* -- elevation ------------------------------------------------------ */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 8px 24px rgb(14 42 71 / 0.08);
+
+  /* -- motion --------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 200ms;
+  --duration-base: 450ms;
+}

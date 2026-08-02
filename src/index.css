@@ -1,0 +1,87 @@
+@import "tailwindcss";
+@import "./brand/theme.css";
+
+/* ---------------------------------------------------------------------------
+   Bridge the brand variables into Tailwind's token system.
+   `@theme inline` means Tailwind emits utilities that REFERENCE the variables
+   rather than copying their values — so changing theme.css re-skins everything
+   at runtime, with no rebuild.
+
+   Result: `bg-brand`, `text-accent`, `font-heading`, `rounded-card` etc.
+--------------------------------------------------------------------------- */
+@theme inline {
+  --color-brand: var(--brand-primary);
+  --color-brand-soft: var(--brand-primary-soft);
+  --color-accent: var(--brand-accent);
+  --color-accent-soft: var(--brand-accent-soft);
+
+  --color-ink: var(--neutral-900);
+  --color-body: var(--neutral-700);
+  --color-muted: var(--neutral-500);
+  --color-line: var(--neutral-200);
+  --color-surface: var(--surface-card);
+  --color-page: var(--surface-page);
+
+  --color-success: var(--status-success);
+  --color-warning: var(--status-warning);
+  --color-danger: var(--status-danger);
+
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
+
+  --radius-card: var(--radius-card);
+  --radius-input: var(--radius-input);
+  --radius-pill: var(--radius-pill);
+
+  --shadow-card: var(--shadow-sm);
+  --shadow-float: var(--shadow-lg);
+}
+
+/* ---------------------------------------------------------------------------
+   Element defaults.
+
+   These MUST live in `@layer base`. Unlayered CSS beats layered CSS in the
+   cascade, so an unlayered `h2 { color: ... }` would silently defeat every
+   `text-*` utility — headings on dark sections would stay dark.
+--------------------------------------------------------------------------- */
+@layer base {
+  html {
+    /* Lenis drives smooth scrolling; native smooth scroll would fight it. */
+    scroll-behavior: auto;
+  }
+
+  body {
+    background-color: var(--surface-page);
+    color: var(--text-body);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+    color: var(--text-strong);
+    text-wrap: balance;
+  }
+
+  /* Visible focus for keyboard users — never remove this. */
+  :focus-visible {
+    outline: 2px solid var(--brand-accent);
+    outline-offset: 3px;
+  }
+}
+
+/* Global safety net, deliberately unlayered so it wins. Individual beats must
+   ALSO ship a proper reduced-motion fallback that renders their final state —
+   this only stops movement, it does not tell the story. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,16 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# env files hold secrets and never belong in git
+.env
+.env.*
+!.env.example
+
+# editors / os
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.log
