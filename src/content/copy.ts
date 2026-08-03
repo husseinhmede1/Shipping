@@ -11,6 +11,18 @@
 --------------------------------------------------------------------------- */
 
 export const copy = {
+  /* -- PRELOADER ------------------------------------------------------ */
+  loading: {
+    // Shown under the counter, advancing as progress climbs. Four stages,
+    // mapped to quarters of the bar.
+    stages: [
+      "Connecting suppliers",
+      "Consolidating shipments",
+      "Clearing customs",
+      "Ready",
+    ],
+  },
+
   /* -- BEAT 0 — Hero ------------------------------------------------- */
   hero: {
     eyebrow: "For sourcing, shipping & freight-forwarding agencies",

@@ -1,6 +1,9 @@
+import { useState } from "react";
+
 import { useSmoothScroll } from "@/lib/useSmoothScroll";
 import { brand } from "@/brand/brand.config";
 import { copy } from "@/content/copy";
+import { Preloader } from "@/components/preloader/Preloader";
 
 import { Beat0Hero } from "@/beats/Beat0Hero";
 import { Beat1Chaos } from "@/beats/Beat1Chaos";
@@ -15,12 +18,19 @@ import { Beat8Cta } from "@/beats/Beat8Cta";
 /**
  * The whole page, in scroll order. Each beat owns its own layout, copy import
  * and (once built) its own scroll animation plus reduced-motion fallback.
+ *
+ * The preloader sits above everything until loading completes. The page renders
+ * underneath it the whole time, so it is fully painted by the moment the wipe
+ * reveals it — no flash of half-built layout.
  */
 export default function App() {
+  const [, setLoaded] = useState(false);
   useSmoothScroll();
 
   return (
     <>
+      <Preloader onDone={() => setLoaded(true)} />
+
       <a
         href="#the-chaos"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-input focus:bg-white focus:px-4 focus:py-2 focus:text-ink"
