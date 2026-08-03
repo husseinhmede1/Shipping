@@ -25,7 +25,9 @@ import { Beat8Cta } from "@/beats/Beat8Cta";
  * reveals it — no flash of half-built layout.
  */
 export default function App() {
-  const [, setLoaded] = useState(false);
+  // Gates the hero video download: nothing heavy is fetched until the
+  // preloader is out of the way and the page is idle.
+  const [loaded, setLoaded] = useState(false);
   useSmoothScroll();
 
   return (
@@ -48,7 +50,7 @@ export default function App() {
       </a>
 
       <main>
-        <Beat0Hero />
+        <Beat0Hero ready={loaded} />
         <Beat1Chaos />
         <Beat2Order />
         <Beat3Ledger />

@@ -16,6 +16,14 @@
        the poster stays up and the story is unaffected, because the text
        sequence does not depend on the video.
 
+   LOADING  The video is NOT fetched during startup. Nothing is requested until
+   the preloader has finished and the browser reports idle, so the file never
+   competes with fonts, CSS or JavaScript for bandwidth. Measured: the hero text
+   paints in ~1s on every connection profile, while the desktop video takes 2s
+   on fibre and 20s on a slow line — so it must not be in that critical window.
+   Until it arrives the poster carries the hero, which is a fine outcome rather
+   than a broken one.
+
    ASSETS  public/media/hero-dock.mp4        1920x1080, 9.0MB  (desktop)
            public/media/hero-dock-mobile.mp4 1280x720,  2.5MB  (<=767px)
    Both are 12fps with EVERY frame a keyframe. That encode is what makes
@@ -23,7 +31,7 @@
    keyframe on each seek and stutters badly.
    =========================================================================== */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -38,7 +46,12 @@ const VIDEO_SRC = "/media/hero-dock.mp4";
 const MOBILE_VIDEO_SRC = "/media/hero-dock-mobile.mp4";
 const POSTER_SRC = "/media/hero-dock-poster.jpg";
 
-export function Beat0Hero() {
+type Beat0HeroProps = {
+  /** True once the preloader has finished. Gates the video download. */
+  ready?: boolean;
+};
+
+export function Beat0Hero({ ready = false }: Beat0HeroProps) {
   const reducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
 
@@ -46,6 +59,10 @@ export function Beat0Hero() {
   // and the pin length, never whether the sequence runs at all.
   const staticMode = reducedMotion;
   const videoSrc = isMobile ? MOBILE_VIDEO_SRC : VIDEO_SRC;
+
+  // Empty until we choose to start fetching. A <video> with no src simply shows
+  // its poster, so the hero looks finished the whole time.
+  const [activeSrc, setActiveSrc] = useState<string | null>(null);
 
   const root = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -64,11 +81,37 @@ export function Beat0Hero() {
     );
   }, [staticMode]);
 
+  /* -- start the download, but only once the page is out of the way -------- */
+  useEffect(() => {
+    if (staticMode || !ready) return;
+
+    let cancelled = false;
+    const begin = () => {
+      if (!cancelled) setActiveSrc(videoSrc);
+    };
+
+    // requestIdleCallback waits for a genuine gap in the main thread. The
+    // timeout is the backstop: on a busy page we still start within 1.5s.
+    const idle = window.requestIdleCallback;
+    if (typeof idle === "function") {
+      const handle = idle(begin, { timeout: 1500 });
+      return () => {
+        cancelled = true;
+        window.cancelIdleCallback?.(handle);
+      };
+    }
+
+    const timer = window.setTimeout(begin, 400);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [ready, staticMode, videoSrc]);
+
   /* -- the pinned scroll sequence ------------------------------------------ */
   useEffect(() => {
     if (staticMode || !root.current) return;
 
-    const element = video.current;
     const context = gsap.context(() => {
       const timeline = gsap.timeline({
         scrollTrigger: {
@@ -81,16 +124,26 @@ export function Beat0Hero() {
         },
       });
 
-      // The video spans the whole pin. `ease: none` keeps frame position linear
-      // against scroll — easing here makes the footage feel like it is fighting
-      // the wheel rather than following it.
-      if (element) {
-        timeline.to(
-          element,
-          { currentTime: () => element.duration || 10, ease: "none" },
-          0,
-        );
-      }
+      // Drive a proxy value across the pin and map it onto the video, rather
+      // than tweening currentTime directly. Two reasons: the file may not have
+      // arrived yet (deferred download), and duration is unknown until metadata
+      // lands — so the tween must not bake either in at build time. While the
+      // video is missing or unready this is simply a no-op and the poster
+      // stays up; the text sequence is unaffected either way.
+      const playhead = { progress: 0 };
+      timeline.to(
+        playhead,
+        {
+          progress: 1,
+          ease: "none",
+          onUpdate: () => {
+            const media = video.current;
+            if (!media || media.readyState < 1 || !media.duration) return;
+            media.currentTime = playhead.progress * media.duration;
+          },
+        },
+        0,
+      );
 
       timeline
         .fromTo(
@@ -122,7 +175,7 @@ export function Beat0Hero() {
      shows a frame instead of an empty rectangle.                             */
   useEffect(() => {
     const element = video.current;
-    if (!element || staticMode) return;
+    if (!element || staticMode || !activeSrc) return;
 
     const prime = () => {
       element
@@ -138,7 +191,7 @@ export function Beat0Hero() {
     else element.addEventListener("loadeddata", prime, { once: true });
 
     return () => element.removeEventListener("loadeddata", prime);
-  }, [staticMode, videoSrc]);
+  }, [staticMode, activeSrc]);
 
   return (
     <section
@@ -157,12 +210,12 @@ export function Beat0Hero() {
       ) : (
         <video
           ref={video}
-          key={videoSrc}
-          src={videoSrc}
+          key={activeSrc ?? "idle"}
+          src={activeSrc ?? undefined}
           poster={POSTER_SRC}
           muted
           playsInline
-          preload="auto"
+          preload={activeSrc ? "auto" : "none"}
           aria-hidden="true"
           tabIndex={-1}
           className="absolute inset-0 -z-10 h-full w-full object-cover"
