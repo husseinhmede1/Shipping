@@ -97,7 +97,7 @@ export function Beat8Cta() {
           <button
             type="submit"
             disabled={status === "sending"}
-            className="mt-6 w-full rounded-input bg-accent px-6 py-3 font-semibold text-brand disabled:opacity-60"
+            className="mt-6 w-full rounded-input bg-cta px-6 py-3 font-semibold text-brand disabled:opacity-60"
           >
             {status === "sending" ? "Sending…" : brand.cta.primary.label}
           </button>

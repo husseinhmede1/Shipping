@@ -146,7 +146,12 @@ export function Globe({ progress, reducedMotion }: GlobeProps) {
           makes the sphere read as solid rather than as a cloud. */}
         <mesh>
           <sphereGeometry args={[RADIUS * 0.985, 48, 48]} />
-          <meshBasicMaterial color={brandColor("--brand-primary", "#0e2a47")} />
+          {/* The SOFT primary, not the primary — against the near-black overlay
+              the darkest green leaves the globe with no silhouette. This sits in
+              the same mid-tone band as the video's lit surfaces. */}
+          <meshBasicMaterial
+            color={brandColor("--brand-primary-soft", "#1e3a30")}
+          />
         </mesh>
 
         {/* orbit ring */}

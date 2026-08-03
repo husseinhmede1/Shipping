@@ -15,6 +15,11 @@
   --color-accent: var(--brand-accent);
   --color-accent-soft: var(--brand-accent-soft);
 
+  /* Amber, CTA use only — `bg-cta`. Never reach for this as a general accent. */
+  --color-cta: var(--cta-primary);
+  --color-cta-soft: var(--cta-primary-soft);
+  --color-glow: var(--brand-glow);
+
   --color-ink: var(--neutral-900);
   --color-body: var(--neutral-700);
   --color-muted: var(--neutral-500);
@@ -35,6 +40,13 @@
 
   --shadow-card: var(--shadow-sm);
   --shadow-float: var(--shadow-lg);
+}
+
+/* White type over the hero video. The green halo is what keeps it legible as
+   the footage moves underneath — without it, light frames swallow the text. */
+@utility text-on-video {
+  color: #ffffff;
+  text-shadow: var(--shadow-glow);
 }
 
 /* ---------------------------------------------------------------------------

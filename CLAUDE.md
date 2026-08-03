@@ -29,6 +29,12 @@ Framer Motion · lucide-react
   `src/brand/theme.css` as a CSS variable, surfaced to Tailwind through the
   `@theme inline` block in `src/index.css`. Never write a hex value in a
   component. The product is white-label — re-skinning must touch one file.
+- **Green is the accent; amber is for CTAs only.** The greens are sampled from
+  the hero footage (hue 130–160). Use `accent` freely. Use `cta` *only* on
+  buttons that ask for a click — its job is to be the one thing on screen that
+  isn't green. Never use `cta` as a decorative highlight.
+- **White type over the video** uses the `text-on-video` utility, which applies
+  the layered green halo. Plain white text on the footage fails on light frames.
 - **Base CSS goes in `@layer base`.** Unlayered CSS beats layered CSS, so an
   unlayered `h2 { color: ... }` silently defeats every `text-*` utility.
 - **Copy.** Every headline and paragraph lives in `src/content/copy.ts`.

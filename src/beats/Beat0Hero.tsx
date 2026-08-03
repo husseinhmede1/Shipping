@@ -28,7 +28,7 @@ export function Beat0Hero() {
         <div className="mt-10 flex flex-wrap items-center gap-4">
           <a
             href={brand.cta.primary.href}
-            className="rounded-input bg-accent px-6 py-3 font-semibold text-brand transition-transform duration-200 hover:-translate-y-0.5"
+            className="rounded-input bg-cta px-6 py-3 font-semibold text-brand transition-transform duration-200 hover:-translate-y-0.5"
           >
             {brand.cta.primary.label}
           </a>

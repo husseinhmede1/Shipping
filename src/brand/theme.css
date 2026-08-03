@@ -3,29 +3,51 @@
    The product is white-label, so every colour, font and shape lives here as a
    CSS variable. Nothing else in the codebase should contain a hex value.
 
-   To re-brand for a different agency: change the values below. Nothing else.
+   PALETTE ORIGIN
+   The greens below are derived from the hero footage, not invented. Sampling
+   frames from the dock video gives a dominant hue band of 130–160 with low
+   saturation (13–27%) and low value (11–37%) — a muted, overcast green. The
+   brand darks sit inside that band so the page and the video read as one
+   material; the accent sits at the same hue but far higher saturation so it
+   separates cleanly from the footage instead of sinking into it.
+
+   Amber is no longer the accent. It is reserved for calls to action, where its
+   opposition to the green is the point.
 --------------------------------------------------------------------------- */
 
 :root {
   /* -- brand ---------------------------------------------------------- */
-  --brand-primary: #0e2a47; /* deep navy — trust, logistics */
-  --brand-primary-soft: #1c3e64;
-  --brand-accent: #e08733; /* amber — CTAs, active states, highlights */
-  --brand-accent-soft: #f0a961;
+  --brand-primary: #12241e; /* deep green — matches the video's shadows */
+  --brand-primary-soft: #1e3a30;
+  --brand-accent: #2fa36f; /* the accent: same hue as the footage, far more saturated */
+  --brand-accent-soft: #5bc496;
+
+  /* Deep forest green used behind white type over the video. Dark on purpose —
+     over moving footage this works as a legibility halo, not a glow. */
+  --brand-glow: #0c4f1c;
+
+  /* -- calls to action ------------------------------------------------ */
+  /* Amber, demoted from accent to CTA-only. Opposite the green, so buttons
+     separate from everything around them. */
+  --cta-primary: #e08733;
+  --cta-primary-soft: #f0a961;
 
   /* -- neutrals (9 steps, dark -> light) ------------------------------ */
-  --neutral-950: #0b1220;
-  --neutral-900: #131c2b;
-  --neutral-800: #1b2733;
-  --neutral-700: #364150;
-  --neutral-500: #5a6875;
-  --neutral-300: #aab6c2;
-  --neutral-200: #d8dee5;
-  --neutral-100: #eef2f6;
-  --neutral-50: #f5f7fa;
+  /* Carry a slight green cast so greys sit with the brand rather than fighting it. */
+  --neutral-950: #070d0a;
+  --neutral-900: #0e1713;
+  --neutral-800: #16211c;
+  --neutral-700: #31403a;
+  --neutral-500: #5c6b64;
+  --neutral-300: #a7b4ad;
+  --neutral-200: #d6ded9;
+  --neutral-100: #edf2ef;
+  --neutral-50: #f5f8f6;
 
   /* -- status --------------------------------------------------------- */
-  --status-success: #1e8a80;
+  /* Success is deliberately a cooler green than the accent, so "paid" never
+     reads as just another brand flourish. */
+  --status-success: #1f8f6b;
   --status-warning: #c98a16;
   --status-danger: #c4453c;
 
@@ -49,7 +71,13 @@
 
   /* -- elevation ------------------------------------------------------ */
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.06);
-  --shadow-lg: 0 8px 24px rgb(14 42 71 / 0.08);
+  --shadow-lg: 0 8px 24px rgb(18 36 30 / 0.1);
+
+  /* Layered halo for white type over video. Several soft shadows read as a
+     glow; a single hard one reads as a drop shadow. */
+  --shadow-glow:
+    0 0 12px rgb(12 79 28 / 0.9), 0 0 34px rgb(12 79 28 / 0.65),
+    0 2px 4px rgb(0 0 0 / 0.5);
 
   /* -- motion --------------------------------------------------------- */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
