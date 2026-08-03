@@ -10,13 +10,17 @@
 
    Degrades on two axes:
      - prefers-reduced-motion : poster still, every line visible, no pin.
-     - under 768px            : poster still, no pin, lines simply visible.
-       Frame-accurate seeking is unreliable on mobile browsers no matter how
-       the file is encoded, so we do not attempt it.
+     - under 768px            : the story still runs — the section pins and the
+       lines arrive in sequence exactly as on desktop. Only the video source
+       changes, to a lighter 720p file. If a mobile browser refuses to seek it,
+       the poster stays up and the story is unaffected, because the text
+       sequence does not depend on the video.
 
-   ASSET  public/media/hero-dock.mp4 — 1920x1080, 12fps, EVERY frame a
-   keyframe. That encode is what makes seeking possible; a normally encoded
-   file rebuilds from the previous keyframe on each seek and stutters badly.
+   ASSETS  public/media/hero-dock.mp4        1920x1080, 9.0MB  (desktop)
+           public/media/hero-dock-mobile.mp4 1280x720,  2.5MB  (<=767px)
+   Both are 12fps with EVERY frame a keyframe. That encode is what makes
+   seeking possible; a normally encoded file rebuilds from the previous
+   keyframe on each seek and stutters badly.
    =========================================================================== */
 
 import { useEffect, useRef } from "react";
@@ -31,12 +35,17 @@ import { useIsMobile } from "@/lib/useMediaQuery";
 gsap.registerPlugin(ScrollTrigger);
 
 const VIDEO_SRC = "/media/hero-dock.mp4";
+const MOBILE_VIDEO_SRC = "/media/hero-dock-mobile.mp4";
 const POSTER_SRC = "/media/hero-dock-poster.jpg";
 
 export function Beat0Hero() {
   const reducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
-  const staticMode = reducedMotion || isMobile;
+
+  // Only reduced motion disables the story. Screen size changes the video file
+  // and the pin length, never whether the sequence runs at all.
+  const staticMode = reducedMotion;
+  const videoSrc = isMobile ? MOBILE_VIDEO_SRC : VIDEO_SRC;
 
   const root = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -65,7 +74,7 @@ export function Beat0Hero() {
         scrollTrigger: {
           trigger: root.current,
           start: "top top",
-          end: "+=340%",
+          end: isMobile ? "+=260%" : "+=340%",
           pin: true,
           scrub: 0.8,
           anticipatePin: 1,
@@ -105,7 +114,7 @@ export function Beat0Hero() {
     }, root);
 
     return () => context.revert();
-  }, [staticMode]);
+  }, [staticMode, isMobile]);
 
   /* -- prime the decoder ---------------------------------------------------
      Browsers will not seek a video that has never been handed to the decoder.
@@ -129,7 +138,7 @@ export function Beat0Hero() {
     else element.addEventListener("loadeddata", prime, { once: true });
 
     return () => element.removeEventListener("loadeddata", prime);
-  }, [staticMode]);
+  }, [staticMode, videoSrc]);
 
   return (
     <section
@@ -148,7 +157,8 @@ export function Beat0Hero() {
       ) : (
         <video
           ref={video}
-          src={VIDEO_SRC}
+          key={videoSrc}
+          src={videoSrc}
           poster={POSTER_SRC}
           muted
           playsInline

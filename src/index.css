@@ -60,9 +60,19 @@
   html {
     /* Lenis drives smooth scrolling; native smooth scroll would fight it. */
     scroll-behavior: auto;
+
+    /* Reserve the scrollbar gutter permanently. Locking body scroll (the
+       preloader does) otherwise removes the scrollbar and widens the layout
+       viewport — and GSAP bakes that wider measurement into the pinned
+       section as an inline pixel width, leaving it too wide afterwards. */
+    scrollbar-gutter: stable;
   }
 
   body {
+    /* Belt and braces: nothing should ever scroll the page sideways. `clip`
+       rather than `hidden` because `hidden` creates a scroll container, which
+       breaks ScrollTrigger's pinning. */
+    overflow-x: clip;
     background-color: var(--surface-page);
     color: var(--text-body);
     font-family: var(--font-body);

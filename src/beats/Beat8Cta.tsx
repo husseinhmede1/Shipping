@@ -91,7 +91,7 @@ export function Beat8Cta() {
             tabIndex={-1}
             autoComplete="off"
             aria-hidden="true"
-            className="absolute -left-[9999px]"
+            className="absolute h-px w-px overflow-hidden opacity-0 [clip-path:inset(50%)]"
           />
 
           <button

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { useSmoothScroll } from "@/lib/useSmoothScroll";
 import { brand } from "@/brand/brand.config";
@@ -29,7 +30,15 @@ export default function App() {
 
   return (
     <>
-      <Preloader onDone={() => setLoaded(true)} />
+      <Preloader
+        onDone={() => {
+          setLoaded(true);
+          // Re-measure once the preloader has released its scroll lock. Any
+          // ScrollTrigger created while the body was locked measured a page
+          // with no scrollbar, and pinning bakes that width in as pixels.
+          ScrollTrigger.refresh();
+        }}
+      />
 
       <a
         href="#the-chaos"
