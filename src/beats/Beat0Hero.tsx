@@ -39,7 +39,6 @@ import { brand } from "@/brand/brand.config";
 import { copy } from "@/content/copy";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { useIsMobile } from "@/lib/useMediaQuery";
-import { SiteHeader } from "@/components/SiteHeader";
 import { ScrollCue } from "@/components/ScrollCue";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -232,8 +231,6 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
       aria-labelledby="hero-headline"
       className="relative isolate flex min-h-screen items-center overflow-hidden bg-brand"
     >
-      <SiteHeader />
-
       {/* ---- background ---------------------------------------------------- */}
       {staticMode ? (
         <img

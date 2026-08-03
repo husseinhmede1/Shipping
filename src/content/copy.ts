@@ -23,6 +23,14 @@ export const copy = {
     ],
   },
 
+  /* -- NAVIGATION ------------------------------------------------------ */
+  nav: [
+    { label: "Platform", href: "#the-order" },
+    { label: "Ledger", href: "#the-ledger" },
+    { label: "Tracking", href: "#the-journey" },
+    { label: "Features", href: "#the-features" },
+  ],
+
   /* -- BEAT 0 — Hero ------------------------------------------------- */
   hero: {
     eyebrow: "For sourcing, shipping & freight-forwarding agencies",

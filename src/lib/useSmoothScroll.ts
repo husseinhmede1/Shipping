@@ -18,6 +18,12 @@ gsap.registerPlugin(ScrollTrigger);
  * Disabled entirely under prefers-reduced-motion — hijacking scroll is exactly
  * what that setting exists to prevent.
  */
+/** The live Lenis instance, so anchor links can scroll through it rather than
+ *  fighting it with a native jump. Null under reduced motion, where native
+ *  scrolling is correct. */
+let instance: Lenis | null = null;
+export const getLenis = () => instance;
+
 export function useSmoothScroll() {
   const reduced = useReducedMotion();
 
@@ -25,6 +31,7 @@ export function useSmoothScroll() {
     if (reduced) return;
 
     const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
+    instance = lenis;
 
     lenis.on("scroll", ScrollTrigger.update);
 
@@ -35,6 +42,7 @@ export function useSmoothScroll() {
     return () => {
       gsap.ticker.remove(raf);
       lenis.destroy();
+      instance = null;
     };
   }, [reduced]);
 }

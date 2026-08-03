@@ -5,6 +5,7 @@ import { useSmoothScroll } from "@/lib/useSmoothScroll";
 import { brand } from "@/brand/brand.config";
 import { copy } from "@/content/copy";
 import { Preloader } from "@/components/preloader/Preloader";
+import { SiteHeader } from "@/components/SiteHeader";
 
 import { Beat0Hero } from "@/beats/Beat0Hero";
 import { Beat1Chaos } from "@/beats/Beat1Chaos";
@@ -41,6 +42,8 @@ export default function App() {
           ScrollTrigger.refresh();
         }}
       />
+
+      <SiteHeader />
 
       <a
         href="#the-chaos"

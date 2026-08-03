@@ -81,8 +81,9 @@ pnpm preview     # serve the production build locally
 
 **Beat 0 is built**: a scroll-scrubbed dock video pinned behind the opening
 lines. The eyebrow and headline are present on arrival; the subhead and CTAs
-arrive on scroll. A header (placeholder logo — see `src/brand/LogoMark.tsx`)
-and a scroll cue sit over it. Beats 1–8 are still static, responsive sections with real
+arrive on scroll. A fixed transparent header (placeholder logo — see
+`src/brand/LogoMark.tsx`) spans the whole page, and a scroll cue sits over the
+hero. Beats 1–8 are still static, responsive sections with real
 copy. Motion is added one beat at a time, reviewed in the browser after each,
 per the `TODO (motion)` comment at the top of each beat file.
 
