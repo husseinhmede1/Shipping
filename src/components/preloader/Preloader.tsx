@@ -57,18 +57,23 @@ export function Preloader({ onDone }: { onDone: () => void }) {
       return;
     }
 
+    // Soft dissolve: the counter goes first, the globe breathes outward slightly
+    // as it fades, and the whole overlay cross-fades into the page underneath.
+    // Overlapping starts keep it feeling like one motion rather than three.
+    overlay.current.style.pointerEvents = "none";
+
     const timeline = gsap.timeline({ onComplete: finish });
     timeline
-      .to(stage.current, { opacity: 0, y: -12, duration: 0.35, ease: "power2.in" }, 0)
+      .to(stage.current, { opacity: 0, duration: 0.45, ease: "power2.out" }, 0)
       .to(
         overlay.current.querySelector("[data-canvas]"),
-        { scale: 1.35, opacity: 0, duration: 0.9, ease: "power2.inOut" },
+        { scale: 1.06, opacity: 0, duration: 1.1, ease: "power2.out" },
         0.1,
       )
       .to(
         overlay.current,
-        { yPercent: -100, duration: 0.9, ease: "power4.inOut" },
-        0.45,
+        { opacity: 0, duration: 0.95, ease: "power2.inOut" },
+        0.25,
       );
 
     return () => {
