@@ -79,7 +79,10 @@ pnpm preview     # serve the production build locally
 
 ## Current state
 
-All nine beats exist as **static, responsive sections with real copy**. None are
-animated yet — that is deliberate. Motion is added one beat at a time, reviewed
-in the browser after each, per the `TODO (motion)` comment at the top of each
-beat file.
+**Beat 0 is built**: a scroll-scrubbed dock video pinned behind three lines that
+arrive in sequence. Beats 1–8 are still static, responsive sections with real
+copy. Motion is added one beat at a time, reviewed in the browser after each,
+per the `TODO (motion)` comment at the top of each beat file.
+
+A preloader (rotating point-cloud globe) sits above everything until load
+completes.
