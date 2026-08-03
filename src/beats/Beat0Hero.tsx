@@ -39,6 +39,8 @@ import { brand } from "@/brand/brand.config";
 import { copy } from "@/content/copy";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { useIsMobile } from "@/lib/useMediaQuery";
+import { SiteHeader } from "@/components/SiteHeader";
+import { ScrollCue } from "@/components/ScrollCue";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -71,14 +73,48 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
   const subhead = useRef<HTMLParagraphElement>(null);
   const actions = useRef<HTMLDivElement>(null);
 
-  /* -- line one: entrance is time-based, never scroll-gated ---------------- */
+  // The cue is plain state, not GSAP — see ScrollCue for why.
+  const [cueArmed, setCueArmed] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  /* -- on arrival: eyebrow AND headline ------------------------------------
+     Both are time-based, never scroll-gated. A visitor who never scrolls must
+     still get the whole proposition — an opening screen holding one small line
+     of text reads as a broken page, not as restraint. The headline is also the
+     largest element on screen, so keeping it out of the scroll sequence is what
+     protects the LCP.                                                        */
   useEffect(() => {
     if (staticMode) return;
-    gsap.fromTo(
-      eyebrow.current,
-      { opacity: 0, y: 14 },
-      { opacity: 1, y: 0, duration: 0.9, ease: "power3.out", delay: 0.15 },
-    );
+    const entrance = gsap.timeline({ delay: 0.15 });
+    entrance
+      .fromTo(
+        eyebrow.current,
+        { autoAlpha: 0, y: 14 },
+        { autoAlpha: 1, y: 0, duration: 0.8, ease: "power3.out" },
+        0,
+      )
+      .fromTo(
+        headline.current,
+        { autoAlpha: 0, y: 22 },
+        { autoAlpha: 1, y: 0, duration: 1.1, ease: "power3.out" },
+        0.12,
+      );
+    return () => {
+      entrance.kill();
+    };
+  }, [staticMode]);
+
+  /* -- the scroll cue ------------------------------------------------------ */
+  useEffect(() => {
+    if (staticMode) return;
+    const timer = window.setTimeout(() => setCueArmed(true), 1300);
+    const onScroll = () => setHasScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, [staticMode]);
 
   /* -- start the download, but only once the page is out of the way -------- */
@@ -145,24 +181,21 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
         0,
       );
 
+      // autoAlpha, not opacity. GSAP then toggles `visibility` too, which keeps
+      // not-yet-revealed controls out of the keyboard tab order — otherwise
+      // focus lands on invisible buttons.
       timeline
         .fromTo(
-          headline.current,
-          { opacity: 0, y: 26 },
-          { opacity: 1, y: 0, ease: "power2.out", duration: 0.18 },
-          0.1,
-        )
-        .fromTo(
           subhead.current,
-          { opacity: 0, y: 22 },
-          { opacity: 1, y: 0, ease: "power2.out", duration: 0.18 },
-          0.42,
+          { autoAlpha: 0, y: 24 },
+          { autoAlpha: 1, y: 0, ease: "power2.out", duration: 0.2 },
+          0.14,
         )
         .fromTo(
           actions.current,
-          { opacity: 0, y: 18 },
-          { opacity: 1, y: 0, ease: "power2.out", duration: 0.15 },
-          0.7,
+          { autoAlpha: 0, y: 18 },
+          { autoAlpha: 1, y: 0, ease: "power2.out", duration: 0.18 },
+          0.5,
         );
     }, root);
 
@@ -199,6 +232,8 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
       aria-labelledby="hero-headline"
       className="relative isolate flex min-h-screen items-center overflow-hidden bg-brand"
     >
+      <SiteHeader />
+
       {/* ---- background ---------------------------------------------------- */}
       {staticMode ? (
         <img
@@ -234,6 +269,12 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
         className="absolute inset-0 -z-10 bg-gradient-to-t from-black/65 via-transparent to-black/35"
       />
 
+      {/* Grain sits above the scrims but below the copy — it should texture the
+          footage, not the type. */}
+      <div aria-hidden="true" className="film-grain absolute inset-0 -z-10" />
+
+      {!staticMode && <ScrollCue visible={cueArmed && !hasScrolled} />}
+
       {/* ---- copy ---------------------------------------------------------- */}
       <div className="mx-auto w-full max-w-6xl px-5 py-24 sm:px-8">
         <p
@@ -246,7 +287,7 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
         <h1
           ref={headline}
           id="hero-headline"
-          className="text-on-video mt-6 max-w-4xl text-4xl leading-[1.06] font-semibold sm:text-5xl md:text-6xl lg:text-7xl"
+          className="text-on-video mt-6 max-w-4xl text-4xl leading-[1.04] font-semibold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
         >
           {copy.hero.headline}
         </h1>
