@@ -53,6 +53,9 @@ Framer Motion · lucide-react
   focus states, keyboard-reachable CTAs.
 - **Performance.** Compress images before committing. Keep the hero LCP fast;
   lazy-load anything below the fold.
+- **Backgrounds: prefer stills over video.** The graded images in
+  `public/media/bg-*.webp` are ~60–130KB each against 9MB for the hero video,
+  and they are sharper. Video is for the hero only.
 - Each beat is one file in `src/beats/` with a header comment describing what it
   does, what the motion should be, and where real assets get swapped in.
 
@@ -83,7 +86,9 @@ pnpm preview     # serve the production build locally
 lines. The eyebrow and headline are present on arrival; the subhead and CTAs
 arrive on scroll. A fixed transparent header (placeholder logo — see
 `src/brand/LogoMark.tsx`) spans the whole page, and a scroll cue sits over the
-hero. Beats 1–8 are still static, responsive sections with real
+hero. **Beat 4 is built** on a still image with a slow scroll drift — see
+`src/components/BackdropImage.tsx`, the pattern to reuse for the other
+image-backed sections. Beats 1–3 and 5–8 are still static sections with real
 copy. Motion is added one beat at a time, reviewed in the browser after each,
 per the `TODO (motion)` comment at the top of each beat file.
 
