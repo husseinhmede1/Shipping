@@ -16,6 +16,17 @@
        the poster stays up and the story is unaffected, because the text
        sequence does not depend on the video.
 
+   EXIT  The section does not simply scroll away. Over the final stretch of the
+   pin, a full-viewport yellow container face descends from the top and covers
+   the hero — arriving like the container the crane has been lowering — and then
+   serves as the fixed background the next section's content scrolls over. The
+   curtain element lives in App (it must not be a descendant of the pinned
+   element — see the note in the effect) but this scrubbed timeline drives it;
+   Beat1 owns nothing but transparent content. Everything after Beat1 sits in
+   an opaque z-30 wrapper (see App), so the fixed curtain is simply painted
+   over once Beat 2 arrives — stacking, not event callbacks, which had a
+   refresh-ordering trap.
+
    LOADING  The video is NOT fetched during startup. Nothing is requested until
    the preloader has finished and the browser reports idle, so the file never
    competes with fonts, CSS or JavaScript for bandwidth. Measured: the hero text
@@ -134,7 +145,8 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
         scrollTrigger: {
           trigger: root.current,
           start: "top top",
-          end: isMobile ? "+=260%" : "+=340%",
+          // The final ~30% of the pin is the container-curtain descent.
+          end: isMobile ? "+=375%" : "+=490%",
           pin: true,
           scrub: 0.8,
           anticipatePin: 1,
@@ -178,6 +190,24 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
           { autoAlpha: 1, y: 0, ease: "power2.out", duration: 0.18 },
           0.5,
         );
+
+      // The curtain. Starts a beat after the CTAs land so the finished hero
+      // gets a moment on screen, then the container face is lowered over it.
+      // The curtain lives in App, NOT inside this section. The pinned element
+      // keeps a transform after release (GSAP holds it at the spacer's end),
+      // and a transformed ancestor becomes the containing block for fixed
+      // descendants — a curtain in here would silently turn hero-relative and
+      // be clipped by overflow-hidden the moment the pin ends.
+      const curtainEl = document.getElementById("container-curtain");
+      if (curtainEl) {
+        gsap.set(curtainEl, { yPercent: -102, autoAlpha: 1 });
+        timeline.to(
+          curtainEl,
+          { yPercent: 0, ease: "power1.inOut", duration: 0.45 },
+          1.0,
+        );
+      }
+
     }, root);
 
     return () => context.revert();

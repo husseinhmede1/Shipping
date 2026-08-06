@@ -90,8 +90,12 @@ pnpm preview     # serve the production build locally
 **Beat 0 is built**: a scroll-scrubbed dock video pinned behind the opening
 lines. The eyebrow and headline are present on arrival; the subhead and CTAs
 arrive on scroll. A fixed transparent header (placeholder logo — see
-`src/brand/LogoMark.tsx`) spans the whole page, and a scroll cue sits over the
-hero. **Beat 4 is built** on a still image with a slow scroll drift — see
+`src/brand/LogoMark.tsx`) spans the whole page. At the end of the hero pin, a
+yellow container face (`#container-curtain`, rendered in App, driven by the
+hero's timeline) descends over the hero and becomes Beat 1's fixed background.
+The curtain must never be moved inside the pinned hero — GSAP leaves a
+transform on pinned elements after release, which turns fixed descendants
+hero-relative and clips them. **Beat 4 is built** on a still image with a slow scroll drift — see
 `src/components/BackdropImage.tsx`, the pattern to reuse for the other
 image-backed sections. Beats 1–3 and 5–8 are still static sections with real
 copy. Motion is added one beat at a time, reviewed in the browser after each,

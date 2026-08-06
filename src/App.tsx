@@ -54,17 +54,47 @@ export default function App() {
 
       <main>
         <Beat0Hero ready={loaded} />
+
+        {/* The container-face curtain. Driven by the hero's timeline: descends
+            over the hero at the end of its pin, then stays fixed as Beat 1's
+            background. Lives here because it must not sit inside the pinned
+            hero (transformed ancestors capture fixed children). z-20: above
+            the hero, below Beat 1's content and the z-30 wrapper below. */}
+        <div
+          id="container-curtain"
+          aria-hidden="true"
+          className="invisible fixed inset-0 z-20 pointer-events-none"
+        >
+          <picture>
+            <source srcSet="/media/bg-container-face.webp" type="image/webp" />
+            <img
+              src="/media/bg-container-face.jpg"
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </picture>
+          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
+          <div className="film-grain absolute inset-0" />
+        </div>
+
         <Beat1Chaos />
-        <Beat2Order />
-        <Beat3Ledger />
-        <Beat4Pipeline />
-        <Beat5Journey />
-        <Beat6Updates />
-        <Beat7Features />
-        <Beat8Cta />
+        {/* Opaque wrapper above the fixed container-face curtain (z-20).
+            Without it, every page-toned (transparent) section after Beat 1
+            would show the curtain behind it forever. */}
+        <div className="relative z-30 bg-page">
+          <Beat2Order />
+          <Beat3Ledger />
+          <Beat4Pipeline />
+          <Beat5Journey />
+          <Beat6Updates />
+          <Beat7Features />
+          <Beat8Cta />
+        </div>
       </main>
 
-      <footer className="border-t border-line px-5 py-10 sm:px-8">
+      <footer className="relative z-30 border-t border-line bg-page px-5 py-10 sm:px-8">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 text-sm text-muted">
           <p>
             <span className="font-semibold text-ink">{brand.name}</span> — {brand.tagline}
