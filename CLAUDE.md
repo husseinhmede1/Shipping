@@ -49,6 +49,11 @@ Framer Motion · lucide-react
   Use the `useReducedMotion` hook in `src/lib/`.
 - **No pinning below 768px.** Beats stack vertically on mobile. Nothing may
   depend on hover.
+- **Pinned sections must fit ANY viewport height.** Reserve the fixed header
+  with `pt-[var(--header-h)]`, use `100svh` not `100vh`, and size vertical type
+  and spacing with `clamp(min, Xvh, max)` — fixed heights that fit a 900px-tall
+  window sit under the header or below the fold at 660px. Verify at 1366x660
+  and 1280x600, not just full-height displays.
 - **Accessibility.** Semantic HTML, exactly one `h1`, real alt text, visible
   focus states, keyboard-reachable CTAs.
 - **Performance.** Compress images before committing. Keep the hero LCP fast;

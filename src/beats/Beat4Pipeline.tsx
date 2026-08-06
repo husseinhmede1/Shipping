@@ -131,7 +131,7 @@ export function Beat4Pipeline() {
       ref={root}
       id="the-pipeline"
       aria-labelledby="pipeline-heading"
-      className="relative isolate flex h-screen items-center overflow-hidden"
+      className="relative isolate flex h-[100svh] items-center overflow-hidden pt-[var(--header-h)]"
     >
       <StageBackdrop active={stage} />
 
@@ -140,7 +140,7 @@ export function Beat4Pipeline() {
 
         {/* The stage panel. Blocks are stacked and crossfaded, so the height
             never jumps as the text changes length. */}
-        <div className="relative mt-14 h-44 sm:h-40">
+        <div className="relative mt-[clamp(1.5rem,4vh,3.5rem)] h-[clamp(8rem,21vh,11rem)]">
           {copy.pipeline.stages.map((s, i) => (
             <div
               key={s.key}
@@ -152,13 +152,13 @@ export function Beat4Pipeline() {
                   : "pointer-events-none translate-y-3 opacity-0",
               )}
             >
-              <span className="font-heading block text-5xl font-semibold text-accent tabular-nums sm:text-6xl">
+              <span className="font-heading block text-[clamp(2rem,5.2vh,3.75rem)] leading-none font-semibold text-accent tabular-nums">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <h3 className="text-on-video mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h3 className="text-on-video mt-[clamp(0.4rem,1.2vh,0.75rem)] text-[clamp(1.15rem,2.6vh,1.875rem)] font-semibold tracking-tight">
                 {s.label}
               </h3>
-              <p className="text-on-video mt-2 max-w-md text-base opacity-80">
+              <p className="text-on-video mt-[clamp(0.25rem,0.8vh,0.5rem)] max-w-md text-[clamp(0.85rem,1.7vh,1rem)] opacity-80">
                 {s.detail}
               </p>
             </div>
@@ -166,7 +166,7 @@ export function Beat4Pipeline() {
         </div>
 
         {/* Progress rail — where you are in the pipeline. */}
-        <div className="mt-10 max-w-2xl">
+        <div className="mt-[clamp(1rem,3vh,2.5rem)] max-w-2xl">
           <div className="relative h-px w-full bg-white/15">
             <span
               ref={rail}
@@ -189,7 +189,7 @@ export function Beat4Pipeline() {
           </ol>
         </div>
 
-        <MarkPill ref={mark} className="mt-10" style={{ opacity: 0 }} />
+        <MarkPill ref={mark} className="mt-[clamp(1rem,3vh,2.5rem)]" style={{ opacity: 0 }} />
       </div>
     </section>
   );
@@ -205,7 +205,7 @@ function Intro() {
       </p>
       <h2
         id="pipeline-heading"
-        className="text-on-video mt-4 text-3xl leading-[1.08] font-semibold tracking-tight sm:text-4xl md:text-5xl"
+        className="text-on-video mt-[clamp(0.6rem,1.4vh,1rem)] text-[clamp(1.55rem,3.6vh,3rem)] leading-[1.08] font-semibold tracking-tight"
       >
         {copy.pipeline.heading}
       </h2>

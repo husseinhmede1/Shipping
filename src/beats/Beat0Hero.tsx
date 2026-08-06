@@ -229,7 +229,7 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
     <section
       ref={root}
       aria-labelledby="hero-headline"
-      className="relative isolate flex min-h-screen items-center overflow-hidden bg-brand"
+      className="relative isolate flex min-h-[100svh] items-center overflow-hidden bg-brand pt-[var(--header-h)]"
     >
       {/* ---- background ---------------------------------------------------- */}
       {staticMode ? (
@@ -273,7 +273,7 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
       {!staticMode && <ScrollCue visible={cueArmed && !hasScrolled} />}
 
       {/* ---- copy ---------------------------------------------------------- */}
-      <div className="mx-auto w-full max-w-6xl px-5 py-24 sm:px-8">
+      <div className="mx-auto w-full max-w-6xl px-5 py-[clamp(2rem,6vh,6rem)] sm:px-8">
         <p
           ref={eyebrow}
           className="text-on-video text-xs font-semibold tracking-[0.22em] uppercase sm:text-sm"
@@ -284,20 +284,20 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
         <h1
           ref={headline}
           id="hero-headline"
-          className="text-on-video mt-6 max-w-4xl text-4xl leading-[1.04] font-semibold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
+          className="text-on-video mt-[clamp(0.9rem,2vh,1.5rem)] max-w-4xl text-[clamp(2rem,6vh,4.5rem)] leading-[1.04] font-semibold tracking-tight"
         >
           {copy.hero.headline}
         </h1>
 
         <p
           ref={subhead}
-          className="text-on-video mt-7 max-w-2xl text-base leading-relaxed sm:text-lg md:text-xl"
+          className="text-on-video mt-[clamp(1rem,2.4vh,1.75rem)] max-w-2xl text-[clamp(0.95rem,2vh,1.25rem)] leading-relaxed"
         >
           {copy.hero.subhead}
         </p>
 
         <div ref={actions}>
-          <div className="mt-10 flex flex-wrap items-center gap-4">
+          <div className="mt-[clamp(1.25rem,3vh,2.5rem)] flex flex-wrap items-center gap-4">
             <a
               href={brand.cta.primary.href}
               className="rounded-input bg-cta px-6 py-3 font-semibold text-brand transition-transform duration-200 hover:-translate-y-0.5"
@@ -312,7 +312,7 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
             </a>
           </div>
 
-          <p className="text-on-video mt-10 text-xs opacity-70 sm:text-sm">
+          <p className="text-on-video mt-[clamp(1rem,2.6vh,2.5rem)] text-xs opacity-70 sm:text-sm">
             {copy.hero.note}
           </p>
         </div>

@@ -64,6 +64,12 @@
   --font-heading: "Inter Tight Variable", system-ui, sans-serif;
   --font-body: "Inter Variable", system-ui, sans-serif;
 
+  /* -- layout --------------------------------------------------------- */
+  /* Height of the fixed header. Pinned sections must reserve it, or their
+     content centres behind the bar on short screens. Kept in sync with
+     BAR_HEIGHT in SiteHeader.tsx. */
+  --header-h: 76px;
+
   /* -- shape ---------------------------------------------------------- */
   --radius-card: 12px;
   --radius-input: 8px;
