@@ -42,18 +42,6 @@
   --shadow-float: var(--shadow-lg);
 }
 
-/* Falling dot for the scroll cue. */
-@keyframes scroll-cue {
-  0% { transform: translate(-50%, -100%); opacity: 0; }
-  25% { opacity: 1; }
-  75% { opacity: 1; }
-  100% { transform: translate(-50%, 300%); opacity: 0; }
-}
-
-@utility animate-scroll-cue {
-  animation: scroll-cue 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-}
-
 /* Film grain for the hero video.
 
    The footage is upscaled from 720p, so it is inherently a little soft. A fine

@@ -39,7 +39,6 @@ import { brand } from "@/brand/brand.config";
 import { copy } from "@/content/copy";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { useIsMobile } from "@/lib/useMediaQuery";
-import { ScrollCue } from "@/components/ScrollCue";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -72,10 +71,6 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
   const subhead = useRef<HTMLParagraphElement>(null);
   const actions = useRef<HTMLDivElement>(null);
 
-  // The cue is plain state, not GSAP — see ScrollCue for why.
-  const [cueArmed, setCueArmed] = useState(false);
-  const [hasScrolled, setHasScrolled] = useState(false);
-
   /* -- on arrival: eyebrow AND headline ------------------------------------
      Both are time-based, never scroll-gated. A visitor who never scrolls must
      still get the whole proposition — an opening screen holding one small line
@@ -100,19 +95,6 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
       );
     return () => {
       entrance.kill();
-    };
-  }, [staticMode]);
-
-  /* -- the scroll cue ------------------------------------------------------ */
-  useEffect(() => {
-    if (staticMode) return;
-    const timer = window.setTimeout(() => setCueArmed(true), 1300);
-    const onScroll = () => setHasScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener("scroll", onScroll);
     };
   }, [staticMode]);
 
@@ -269,8 +251,6 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
       {/* Grain sits above the scrims but below the copy — it should texture the
           footage, not the type. */}
       <div aria-hidden="true" className="film-grain absolute inset-0 -z-10" />
-
-      {!staticMode && <ScrollCue visible={cueArmed && !hasScrolled} />}
 
       {/* ---- copy ---------------------------------------------------------- */}
       <div className="mx-auto w-full max-w-6xl px-5 py-[clamp(2rem,6vh,6rem)] sm:px-8">
