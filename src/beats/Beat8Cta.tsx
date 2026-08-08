@@ -51,7 +51,12 @@ export function Beat8Cta() {
   }
 
   return (
-    <Section id="lets-connect" heading={copy.close.heading} tone="inverse">
+    <Section
+      id="lets-connect"
+      heading={copy.close.heading}
+      tone="inverse"
+      className="relative z-10"
+    >
       <div className="mt-6 grid gap-12 md:grid-cols-2 md:items-start">
         <div>
           <p className="max-w-xl text-lg text-white/75">{copy.close.body}</p>

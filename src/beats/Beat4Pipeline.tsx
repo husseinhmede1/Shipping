@@ -100,7 +100,7 @@ export function Beat4Pipeline() {
       <section
         id="the-pipeline"
         aria-labelledby="pipeline-heading"
-        className="relative isolate overflow-hidden py-24"
+        className="relative isolate z-10 overflow-hidden py-24"
       >
         <StageBackdrop active={0} staticMode />
         <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
@@ -131,7 +131,7 @@ export function Beat4Pipeline() {
       ref={root}
       id="the-pipeline"
       aria-labelledby="pipeline-heading"
-      className="relative isolate flex h-[100svh] items-center overflow-hidden pt-[var(--header-h)]"
+      className="relative isolate z-10 flex h-[100svh] items-center overflow-hidden pt-[var(--header-h)]"
     >
       <StageBackdrop active={stage} />
 

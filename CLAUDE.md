@@ -87,19 +87,45 @@ pnpm preview     # serve the production build locally
 
 ## Current state
 
-**Beat 0 is built**: a scroll-scrubbed dock video pinned behind the opening
-lines. The eyebrow and headline are present on arrival; the subhead and CTAs
-arrive on scroll. A fixed transparent header (placeholder logo — see
-`src/brand/LogoMark.tsx`) spans the whole page. At the end of the hero pin, a
-yellow container face (`#container-curtain`, rendered in App, driven by the
-hero's timeline) descends over the hero and becomes Beat 1's fixed background.
-The curtain must never be moved inside the pinned hero — GSAP leaves a
-transform on pinned elements after release, which turns fixed descendants
-hero-relative and clips them. **Beat 4 is built** on a still image with a slow scroll drift — see
-`src/components/BackdropImage.tsx`, the pattern to reuse for the other
-image-backed sections. Beats 1–3 and 5–8 are still static sections with real
-copy. Motion is added one beat at a time, reviewed in the browser after each,
-per the `TODO (motion)` comment at the top of each beat file.
+The page is one continuous journey. **Beat 0**: a scroll-scrubbed dock video
+pinned behind the opening lines; at the end of its pin a yellow container face
+(`#container-curtain`, rendered in App, driven by the hero's timeline) descends
+over the hero and becomes Beat 1's fixed background. **Beat 1b (reveal)**: a
+pinned zoom-out — a second fixed copy of the face (`#face-zoom`, z-40 in App)
+shrinks and fades to reveal the full truck at the port
+(`bg-truck-side`). **The truck journey**: a fixed top-down truck sprite
+(`JourneyLayers.tsx`) drives down the page centre through the Order + Ledger
+sections (zone `#road-a`, two-column layouts with an empty centre lane), exits
+into the dark pinned **Beat 4** pipeline (the port: container → crane → ship),
+returns over the tracking section (`#road-b`), then shrinks away as the camera
+"rises". **The flight zone** (`#flight-zone`, Beats 6–7): a fixed olive-field
+backdrop with two screen-blended, independently drifting cloud layers (one
+under the plane, one over it) and a top-down plane that crosses and fades out
+before the closing form. Content in the flight zone sits in dark glass panels
+(tone="overlay" sections).
+
+Fixed-layer stacking inside the z-30 wrapper: field(1) < cloud-back(2) <
+plane(3) < cloud-front(4) < truck(5) < section content(10).
 
 A preloader (rotating point-cloud globe) sits above everything until load
-completes.
+completes. Motion still TODO per-beat: card slide-ins from left/right on the
+road sections, ledger count-up, message stagger, feature-grid stagger.
+
+## Hard-won GSAP/CSS traps (do not re-learn these)
+
+- **A fixed element inside a pinned section breaks after the pin releases.**
+  GSAP leaves a transform on the pinned element, and a transformed ancestor
+  becomes the containing block for fixed descendants. All fixed travellers
+  (curtain, face-zoom, truck, field, clouds, plane) live OUTSIDE every pinned
+  section, in App / JourneyLayers.
+- **ScrollTriggers refresh in CREATION order, not document order.** A trigger
+  created before a pin that sits ABOVE it on the page measures its positions
+  without that pin's spacer (~the pin's full length off). `ScrollTrigger.sort()`
+  must run once after ALL triggers exist — App's own useEffect (parent effects
+  run after every child's) is the right place.
+- **mix-blend-mode is isolated by any stacking-context wrapper.** The cloud
+  images are themselves the fixed z-indexed elements; wrapping one in a
+  positioned div makes its screen blend composite against the wrapper's
+  transparent backdrop (black jpg stays black) instead of the field below.
+- **Scrubbed timelines: never use `.set()` at time 0** — ambiguous when
+  scrolled back to exactly 0. Use `fromTo(..., {duration: 0.001}, 0)`.

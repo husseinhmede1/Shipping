@@ -25,11 +25,23 @@ export function Beat3Ledger() {
   const account = copy.ledger.demoAccount;
 
   return (
-    <Section id="the-ledger" heading={copy.ledger.heading}>
-      <div className="mt-6 grid gap-12 md:grid-cols-2 md:items-start">
-        <p className="max-w-xl text-lg text-body">{copy.ledger.body}</p>
+    <Section id="the-ledger" labelledBy="ledger-heading" className="relative z-10">
+      {/* Two columns around the truck's centre lane — see Beat2Order. */}
+      <div className="grid gap-12 md:grid-cols-2 md:items-start md:gap-x-[clamp(5rem,16vw,15rem)]">
+        <div data-lane="left">
+          <h2
+            id="ledger-heading"
+            className="text-3xl leading-tight font-semibold sm:text-4xl md:text-5xl"
+          >
+            {copy.ledger.heading}
+          </h2>
+          <p className="mt-6 max-w-xl text-lg text-body">{copy.ledger.body}</p>
+        </div>
 
-        <div className="rounded-card border border-line bg-surface p-6 shadow-float">
+        <div
+          data-lane="right"
+          className="rounded-card border border-line bg-surface p-6 shadow-float"
+        >
           <p className="text-sm font-medium text-muted">{account.customer}</p>
 
           <dl className="mt-6 grid grid-cols-3 gap-4">

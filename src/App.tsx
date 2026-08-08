@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { useSmoothScroll } from "@/lib/useSmoothScroll";
@@ -7,8 +7,11 @@ import { copy } from "@/content/copy";
 import { Preloader } from "@/components/preloader/Preloader";
 import { SiteHeader } from "@/components/SiteHeader";
 
+import { JourneyLayers } from "@/components/JourneyLayers";
+
 import { Beat0Hero } from "@/beats/Beat0Hero";
 import { Beat1Chaos } from "@/beats/Beat1Chaos";
+import { Beat1bReveal } from "@/beats/Beat1bReveal";
 import { Beat2Order } from "@/beats/Beat2Order";
 import { Beat3Ledger } from "@/beats/Beat3Ledger";
 import { Beat4Pipeline } from "@/beats/Beat4Pipeline";
@@ -30,6 +33,18 @@ export default function App() {
   // preloader is out of the way and the page is idle.
   const [loaded, setLoaded] = useState(false);
   useSmoothScroll();
+
+  // CRITICAL: triggers refresh in CREATION order unless sorted, and a trigger
+  // refreshing before a pinned section that sits above it on the page measures
+  // its positions without that pin's spacer. JourneyLayers mounts before the
+  // pipeline, so its road-b / flight-zone triggers landed ~3600px (the
+  // pipeline pin's length) too early. Sorting must happen HERE: a parent's
+  // effect runs after every child's, so this is the first moment all triggers
+  // exist. The preloader's refresh() below then recomputes with the right
+  // order.
+  useEffect(() => {
+    ScrollTrigger.sort();
+  }, []);
 
   return (
     <>
@@ -79,17 +94,65 @@ export default function App() {
           <div className="film-grain absolute inset-0" />
         </div>
 
+        {/* A second copy of the container face for the zoom-out reveal.
+            Beat1bReveal switches it on at pin start (pixel-identical to the
+            curtain, so the switch is invisible) and scales it down. z-40:
+            above the z-30 sections, below the z-50 header. Kept out of the
+            pinned section for the same containing-block reason as the
+            curtain. */}
+        <div
+          id="face-zoom"
+          aria-hidden="true"
+          className="invisible fixed inset-0 z-40 pointer-events-none"
+        >
+          <picture>
+            <source srcSet="/media/bg-container-face.webp" type="image/webp" />
+            <img
+              src="/media/bg-container-face.jpg"
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </picture>
+          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
+          <div className="film-grain absolute inset-0" />
+        </div>
+
         <Beat1Chaos />
+        <Beat1bReveal />
+
         {/* Opaque wrapper above the fixed container-face curtain (z-20).
             Without it, every page-toned (transparent) section after Beat 1
-            would show the curtain behind it forever. */}
+            would show the curtain behind it forever. Also hosts the journey
+            layers (fixed truck / field / clouds / plane) as positioned
+            children, painting above the wrapper background and below the
+            z-10 section content. */}
         <div className="relative z-30 bg-page">
-          <Beat2Order />
-          <Beat3Ledger />
+          <JourneyLayers />
+
+          {/* Road, first stretch: the truck drives over Order + Ledger,
+              then exits into the port (the dark pipeline). */}
+          <div id="road-a">
+            <Beat2Order />
+            <Beat3Ledger />
+          </div>
+
           <Beat4Pipeline />
-          <Beat5Journey />
-          <Beat6Updates />
-          <Beat7Features />
+
+          {/* Road, second stretch: back on wheels for the tracking beat.
+              Ends with the truck shrinking away as the camera rises. */}
+          <div id="road-b">
+            <Beat5Journey />
+          </div>
+
+          {/* Flight zone: fixed field + clouds behind, plane crossing.
+              The plane is gone before the closing form arrives. */}
+          <div id="flight-zone">
+            <Beat6Updates />
+            <Beat7Features />
+          </div>
+
           <Beat8Cta />
         </div>
       </main>
