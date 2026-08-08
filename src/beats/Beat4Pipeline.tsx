@@ -1,264 +1,62 @@
 /* ===========================================================================
    BEAT 4 — THE SOURCING PIPELINE
 
-   The section pins and walks the visitor through the pipeline one stage at a
-   time. The background image changes underneath as the stage advances, so the
-   visual travels with the story: goods loaded, container lifted and marked,
-   through the terminal, then at sea. The shipping mark stamps in at the end,
-   and only then does the page release.
+   Part of the truck's road: the section shares the two-column layout with an
+   empty centre lane, and the fixed top-down truck (see JourneyLayers) drives
+   straight through it — the user asked for the pipeline to be the same
+   white-background leg of the trip as the sections around it, so the earlier
+   dark pinned image sequence is gone. Copy and the shipping-mark pill on the
+   left, the four pipeline stages stacked on the right — a vertical rhythm
+   that runs the same direction the truck travels.
 
-   Four images, ~60-130KB each. No video anywhere in this section.
+   The old stage backdrops (bg-container-open / -hanging / -crane / -ship)
+   are still in public/media if a beat ever wants them again.
 
-   HOW IT IS DRIVEN
-   ScrollTrigger owns the pin and reports progress; everything visual is a CSS
-   transition keyed off a stage index. Deliberately not a scrubbed GSAP timeline
-   — those evaluate their tweens during setup, and an earlier component in this
-   project ended up permanently invisible because a tween captured a start value
-   while an entrance animation still had the element hidden. React state plus CSS
-   has no such ordering trap, and the index only changes four times, so it costs
-   four re-renders for the whole section.
-
-   Degrades:
-     - prefers-reduced-motion : no pin, every stage listed, first image static.
-     - under 768px            : same. Pinning a 400vh section on a phone is
-       hostile, and the stages read perfectly well as a list.
+   TODO (motion): slide the stage cards in from the right and the copy from
+   the left as the section enters; stamp the mark pill last.
+   Reduced motion: everything visible, no movement.
    =========================================================================== */
 
-import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
+import { Section } from "@/components/Section";
 import { copy } from "@/content/copy";
-import { useReducedMotion } from "@/lib/useReducedMotion";
-import { useIsMobile } from "@/lib/useMediaQuery";
-import { cn } from "@/lib/cn";
-
-gsap.registerPlugin(ScrollTrigger);
-
-/** One image per stage — the visual travels as the story does. */
-const STAGE_IMAGES = [
-  "bg-container-open", // supplier — doors open, goods going in
-  "bg-container-hanging", // order    — lifted and marked
-  "bg-crane", // items    — through the terminal
-  "bg-ship", // shipment — at sea
-];
-
-const MARK_START = 0.82; // progress at which the shipping mark begins to stamp
 
 export function Beat4Pipeline() {
-  const reducedMotion = useReducedMotion();
-  const isMobile = useIsMobile();
-  const staticMode = reducedMotion || isMobile;
-
-  const root = useRef<HTMLElement>(null);
-  const rail = useRef<HTMLSpanElement>(null);
-  const mark = useRef<HTMLDivElement>(null);
-
-  const [stage, setStage] = useState(0);
-  const stageRef = useRef(0);
-
-  useEffect(() => {
-    if (staticMode || !root.current) return;
-
-    const stages = copy.pipeline.stages.length;
-
-    const trigger = ScrollTrigger.create({
-      trigger: root.current,
-      start: "top top",
-      end: `+=${stages * 100}%`,
-      pin: true,
-      anticipatePin: 1,
-      onUpdate: (self) => {
-        const p = self.progress;
-
-        // Written straight to the DOM — this fires every frame and must not
-        // go through React.
-        if (rail.current) rail.current.style.transform = `scaleX(${p})`;
-
-        if (mark.current) {
-          const t = Math.min(1, Math.max(0, (p - MARK_START) / (1 - MARK_START)));
-          mark.current.style.opacity = String(t);
-          mark.current.style.transform = `translateY(${(1 - t) * 14}px) scale(${0.94 + t * 0.06})`;
-        }
-
-        // The index changes four times across the whole pin, so this is four
-        // re-renders, not one per frame.
-        const index = Math.min(stages - 1, Math.floor(p * stages));
-        if (index !== stageRef.current) {
-          stageRef.current = index;
-          setStage(index);
-        }
-      },
-    });
-
-    return () => trigger.kill();
-  }, [staticMode]);
-
-  /* ---------------------------------------------------------------- static */
-  if (staticMode) {
-    return (
-      <section
-        id="the-pipeline"
-        aria-labelledby="pipeline-heading"
-        className="relative isolate z-10 overflow-hidden py-24"
-      >
-        <StageBackdrop active={0} staticMode />
-        <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
-          <Intro />
-          <ol className="mt-12 space-y-4">
-            {copy.pipeline.stages.map((s, i) => (
-              <li
-                key={s.key}
-                className="rounded-card border border-white/10 bg-white/[0.04] p-5 backdrop-blur-sm"
-              >
-                <span className="text-xs font-semibold text-accent tabular-nums">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <h3 className="text-on-video mt-2 text-lg font-semibold">{s.label}</h3>
-                <p className="text-on-video mt-1.5 text-sm opacity-75">{s.detail}</p>
-              </li>
-            ))}
-          </ol>
-          <MarkPill className="mt-10" />
-        </div>
-      </section>
-    );
-  }
-
-  /* ---------------------------------------------------------------- pinned */
   return (
-    <section
-      ref={root}
-      id="the-pipeline"
-      aria-labelledby="pipeline-heading"
-      className="relative isolate z-10 flex h-[100svh] items-center overflow-hidden pt-[var(--header-h)]"
-    >
-      <StageBackdrop active={stage} />
+    <Section id="the-pipeline" labelledBy="pipeline-heading" className="relative z-10">
+      <div className="grid gap-12 md:grid-cols-2 md:items-start md:gap-x-[clamp(5rem,16vw,15rem)]">
+        <div data-lane="left">
+          <h2
+            id="pipeline-heading"
+            className="text-3xl leading-tight font-semibold sm:text-4xl md:text-5xl"
+          >
+            {copy.pipeline.heading}
+          </h2>
+          <p className="mt-6 max-w-xl text-lg text-body">{copy.pipeline.body}</p>
 
-      <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
-        <Intro />
+          {/* The generated shipping mark — the pipeline's end product. */}
+          <p className="mt-8 inline-flex items-center gap-2 rounded-pill border border-line bg-surface px-4 py-2 shadow-card">
+            <span className="text-xs tracking-[0.18em] text-muted uppercase">Mark</span>
+            <span className="font-semibold text-ink tabular-nums">
+              {copy.pipeline.sampleMark}
+            </span>
+          </p>
+        </div>
 
-        {/* The stage panel. Blocks are stacked and crossfaded, so the height
-            never jumps as the text changes length. */}
-        <div className="relative mt-[clamp(1.5rem,4vh,3.5rem)] h-[clamp(8rem,21vh,11rem)]">
-          {copy.pipeline.stages.map((s, i) => (
-            <div
-              key={s.key}
-              aria-hidden={i !== stage}
-              className={cn(
-                "absolute inset-0 transition-all duration-700 ease-out",
-                i === stage
-                  ? "translate-y-0 opacity-100"
-                  : "pointer-events-none translate-y-3 opacity-0",
-              )}
+        <ol data-lane="right" className="space-y-4">
+          {copy.pipeline.stages.map((stage, index) => (
+            <li
+              key={stage.key}
+              className="rounded-card border border-line bg-surface p-5 shadow-card"
             >
-              <span className="font-heading block text-[clamp(2rem,5.2vh,3.75rem)] leading-none font-semibold text-accent tabular-nums">
-                {String(i + 1).padStart(2, "0")}
+              <span className="text-xs font-semibold text-accent tabular-nums">
+                {String(index + 1).padStart(2, "0")}
               </span>
-              <h3 className="text-on-video mt-[clamp(0.4rem,1.2vh,0.75rem)] text-[clamp(1.15rem,2.6vh,1.875rem)] font-semibold tracking-tight">
-                {s.label}
-              </h3>
-              <p className="text-on-video mt-[clamp(0.25rem,0.8vh,0.5rem)] max-w-md text-[clamp(0.85rem,1.7vh,1rem)] opacity-80">
-                {s.detail}
-              </p>
-            </div>
+              <h3 className="mt-2 text-base font-semibold text-ink">{stage.label}</h3>
+              <p className="mt-1.5 text-sm text-muted">{stage.detail}</p>
+            </li>
           ))}
-        </div>
-
-        {/* Progress rail — where you are in the pipeline. */}
-        <div className="mt-[clamp(1rem,3vh,2.5rem)] max-w-2xl">
-          <div className="relative h-px w-full bg-white/15">
-            <span
-              ref={rail}
-              className="absolute inset-0 origin-left bg-accent"
-              style={{ transform: "scaleX(0)" }}
-            />
-          </div>
-          <ol className="mt-3 flex justify-between">
-            {copy.pipeline.stages.map((s, i) => (
-              <li
-                key={s.key}
-                className={cn(
-                  "text-[11px] tracking-[0.14em] uppercase transition-opacity duration-500",
-                  i <= stage ? "text-on-video opacity-90" : "text-on-video opacity-35",
-                )}
-              >
-                {s.label}
-              </li>
-            ))}
-          </ol>
-        </div>
-
-        <MarkPill ref={mark} className="mt-[clamp(1rem,3vh,2.5rem)]" style={{ opacity: 0 }} />
+        </ol>
       </div>
-    </section>
+    </Section>
   );
 }
-
-/* ------------------------------------------------------------------ pieces */
-
-function Intro() {
-  return (
-    <div className="max-w-xl">
-      <p className="text-xs font-semibold tracking-[0.22em] text-accent uppercase">
-        The sourcing pipeline
-      </p>
-      <h2
-        id="pipeline-heading"
-        className="text-on-video mt-[clamp(0.6rem,1.4vh,1rem)] text-[clamp(1.55rem,3.6vh,3rem)] leading-[1.08] font-semibold tracking-tight"
-      >
-        {copy.pipeline.heading}
-      </h2>
-    </div>
-  );
-}
-
-/** All four images stacked; only the active one is opaque. They are lazy, but
- *  live in the same section so the browser fetches them together as it nears. */
-function StageBackdrop({ active, staticMode = false }: { active: number; staticMode?: boolean }) {
-  return (
-    <div aria-hidden="true" className="absolute inset-0 -z-10 overflow-hidden bg-[var(--neutral-950)]">
-      {STAGE_IMAGES.map((name, i) => (
-        <picture key={name}>
-          <source srcSet={`/media/${name}.webp`} type="image/webp" />
-          <img
-            src={`/media/${name}.jpg`}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            width={2752}
-            height={1536}
-            className={cn(
-              "absolute inset-0 h-full w-full object-cover transition-all ease-out",
-              staticMode ? "duration-0" : "duration-[1200ms]",
-              i === active ? "scale-105 opacity-100" : "scale-100 opacity-0",
-            )}
-          />
-        </picture>
-      ))}
-
-      <div className="absolute inset-0 bg-gradient-to-r from-[var(--neutral-950)] via-[var(--neutral-950)]/72 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-b from-[var(--neutral-950)] via-transparent to-[var(--neutral-950)]" />
-      <div className="film-grain absolute inset-0" />
-    </div>
-  );
-}
-
-const MarkPill = ({
-  ref,
-  className,
-  style,
-}: {
-  ref?: React.Ref<HTMLDivElement>;
-  className?: string;
-  style?: React.CSSProperties;
-}) => (
-  <div ref={ref} className={className} style={style}>
-    <span className="text-on-video inline-flex items-center gap-3 rounded-pill border border-accent/40 bg-accent/10 px-5 py-2.5 text-sm backdrop-blur-sm">
-      Shipping mark generated automatically
-      <span className="font-mono font-semibold text-accent">
-        {copy.pipeline.sampleMark}
-      </span>
-    </span>
-  </div>
-);

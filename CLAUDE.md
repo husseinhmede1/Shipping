@@ -87,22 +87,27 @@ pnpm preview     # serve the production build locally
 
 ## Current state
 
-The page is one continuous journey. **Beat 0**: a scroll-scrubbed dock video
-pinned behind the opening lines; at the end of its pin a yellow container face
-(`#container-curtain`, rendered in App, driven by the hero's timeline) descends
-over the hero and becomes Beat 1's fixed background. **Beat 1b (reveal)**: a
-pinned zoom-out — a second fixed copy of the face (`#face-zoom`, z-40 in App)
-shrinks and fades to reveal the full truck at the port
-(`bg-truck-side`). **The truck journey**: a fixed top-down truck sprite
-(`JourneyLayers.tsx`) drives down the page centre through the Order + Ledger
-sections (zone `#road-a`, two-column layouts with an empty centre lane), exits
-into the dark pinned **Beat 4** pipeline (the port: container → crane → ship),
-returns over the tracking section (`#road-b`), then shrinks away as the camera
-"rises". **The flight zone** (`#flight-zone`, Beats 6–7): a fixed olive-field
-backdrop with two screen-blended, independently drifting cloud layers (one
-under the plane, one over it) and a top-down plane that crosses and fades out
-before the closing form. Content in the flight zone sits in dark glass panels
-(tone="overlay" sections).
+The page is one continuous "drone shot" — ONE truck element, no camera cuts.
+**Beat 0**: a scroll-scrubbed dock video pinned behind the opening lines; at
+the end of its pin a yellow container face (`#container-curtain`, rendered in
+App, driven by the hero's timeline) descends over the hero and becomes Beat
+1's fixed background. **Beat 1b (reveal)**: the drone rises. A pinned
+transparent viewport (`#reveal-zone`); at pin start `#face-zoom` (fixed z-40
+copy of the curtain) switches on invisibly, then shrinks/dissolves into the
+container roof of the top-down truck sprite scaling down beneath it — the
+surface the visitor was staring at becomes the container ON the truck. No
+second photograph is involved; `bg-truck-side` is unused. **The road**
+(`#road`): the SAME fixed truck (`JourneyLayers.tsx`) drives down the page
+centre through Order, Ledger, Pipeline and Journey — all four are light
+two-column sections with an empty centre lane (Beat 4's old dark pinned stage
+sequence is gone per the owner's direction; its images stay in public/media).
+The truck's y is identical at the reveal's end and the road's start, so the
+handoff is seamless both directions. At the road's end the truck shrinks away
+— the camera keeps rising. **The flight zone** (`#flight-zone`, Beats 6–7): a
+fixed olive-field backdrop with two screen-blended, independently drifting
+cloud layers (one under the plane, one over it) and a top-down plane that
+crosses and fades out before the closing form. Flight-zone content sits in
+dark glass panels (tone="overlay" sections).
 
 Fixed-layer stacking inside the z-30 wrapper: field(1) < cloud-back(2) <
 plane(3) < cloud-front(4) < truck(5) < section content(10).

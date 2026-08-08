@@ -120,6 +120,12 @@ export default function App() {
         </div>
 
         <Beat1Chaos />
+
+        {/* The drone-rise reveal: a transparent pinned viewport. The zoom
+            itself — face shrinking into the truck's container — is driven by
+            JourneyLayers, whose fixed truck is the star of the scene. Sits
+            OUTSIDE the opaque wrapper so the curtain face stays visible right
+            up to the pin. */}
         <Beat1bReveal />
 
         {/* Opaque wrapper above the fixed container-face curtain (z-20).
@@ -131,18 +137,14 @@ export default function App() {
         <div className="relative z-30 bg-page">
           <JourneyLayers />
 
-          {/* Road, first stretch: the truck drives over Order + Ledger,
-              then exits into the port (the dark pipeline). */}
-          <div id="road-a">
+          {/* The road: one continuous drive from the reveal through Order,
+              Ledger, Pipeline and Journey. Starts the moment the reveal
+              unpins (the truck is already in position), ends with the truck
+              shrinking away as the camera rises into the flight. */}
+          <div id="road">
             <Beat2Order />
             <Beat3Ledger />
-          </div>
-
-          <Beat4Pipeline />
-
-          {/* Road, second stretch: back on wheels for the tracking beat.
-              Ends with the truck shrinking away as the camera rises. */}
-          <div id="road-b">
+            <Beat4Pipeline />
             <Beat5Journey />
           </div>
 
