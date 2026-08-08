@@ -70,15 +70,39 @@ export function JourneyLayers() {
     // and the road starts here, so the element never jumps.
     const driveY = () => 0.3 * vh();
 
+    // The reveal footage: portrait 1080x1920; at its final frame (the apex of
+    // the rise) the truck stands ~636px tall in source pixels. From that, the
+    // truck's on-screen height at any viewport is 636 * the object-cover
+    // scale — which is what the sprite must match at the moment it takes over.
+    const VIDEO_W = 1080;
+    const VIDEO_H = 1920;
+    const VIDEO_TRUCK_H = 636;
+
     const context = gsap.context(() => {
-      gsap.set(truck.current, { xPercent: -50, transformOrigin: "50% 30%" });
+      gsap.set(truck.current, { xPercent: -50, transformOrigin: "50% 50%" });
       gsap.set(plane.current, { xPercent: -50 });
 
-      /* -- the reveal: drone rises off the container ---------------------- */
+      /* -- the reveal: real drone footage, scrubbed by scroll ------------- */
       const revealZone = document.getElementById("reveal-zone");
       if (revealZone) {
         const backdrop = document.getElementById("reveal-backdrop");
+        const whiteWash = document.getElementById("reveal-white");
         const face = document.getElementById("face-zoom");
+
+        const narrow = () => window.innerWidth < 768;
+        const coverScale = () =>
+          Math.max(window.innerWidth / VIDEO_W, window.innerHeight / VIDEO_H);
+        // Sprite scale that makes it the same size as the truck in the
+        // video's final frame, and the y that centres it where the video
+        // truck sits (mid-frame; origin is the sprite's centre).
+        const matchScale = () => {
+          const spriteH = truck.current?.offsetHeight || 1;
+          return (VIDEO_TRUCK_H * coverScale()) / spriteH;
+        };
+        const matchY = () => {
+          const spriteH = truck.current?.offsetHeight || 1;
+          return 0.5 * vh() - spriteH / 2;
+        };
 
         const reveal = gsap.timeline({
           scrollTrigger: {
@@ -92,50 +116,89 @@ export function JourneyLayers() {
           },
         });
 
-        // Everything switches on at pin start, hidden under face-zoom.
+        // The video stack switches on at pin start, hidden under face-zoom.
         // fromTo (never .set) so scrubbing back above the pin restores it.
         if (backdrop) {
           reveal.fromTo(backdrop, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, 0);
         }
-        reveal.fromTo(truck.current, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, 0);
-        // On phones the truck's driving lane hugs the right edge, but the
-        // drone must start directly over the container — so the zoom begins
-        // centred (x offset back to mid-screen, larger scale for the narrow
-        // viewport) and drifts into the lane as the truck lands.
-        const narrow = () => window.innerWidth < 768;
-        reveal.fromTo(
-          truck.current,
-          {
-            scale: () => (narrow() ? 5.5 : 3.5),
-            x: () => (narrow() ? -0.35 * window.innerWidth : 0),
-            y: driveY,
-          },
-          {
-            scale: 1,
-            x: 0,
-            y: driveY,
-            ease: "power2.inOut",
-            duration: 0.86,
-            immediateRender: false,
-          },
-          0.04,
-        );
 
         if (face) {
           reveal.fromTo(face, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, 0);
           reveal.fromTo(
             face,
             { scale: 1, transformOrigin: "50% 50%" },
-            { scale: 0.35, ease: "power1.in", duration: 0.42, immediateRender: false },
-            0.04,
+            { scale: 0.5, ease: "power1.in", duration: 0.34, immediateRender: false },
+            0.02,
           );
-          // The face dissolves into the container roof beneath it — the two
-          // textures are near-identical, which is what sells the rise.
-          reveal.to(face, { autoAlpha: 0, ease: "none", duration: 0.24 }, 0.2);
+          // The face dissolves into the moving footage beneath — a flat
+          // texture melting into the same texture with real motion.
+          reveal.to(face, { autoAlpha: 0, ease: "none", duration: 0.22 }, 0.12);
         }
 
-        // Hold the whole truck for a beat before the road takes over.
-        reveal.to({}, { duration: 0.1 });
+        // Scrub the footage across the middle of the pin. Proxy playhead as
+        // in the hero: the file may not have arrived and duration is unknown
+        // until metadata lands, so nothing is baked in at build time. The
+        // element is resolved on EVERY update — Beat1bReveal remounts the
+        // <video> when the deferred src lands (key change), so any reference
+        // captured here would go stale and scrub a detached node.
+        {
+          const playhead = { progress: 0 };
+          reveal.to(
+            playhead,
+            {
+              progress: 1,
+              ease: "none",
+              duration: 0.8,
+              onUpdate: () => {
+                const media = document.getElementById(
+                  "reveal-video",
+                ) as HTMLVideoElement | null;
+                if (!media || media.readyState < 1 || !media.duration) return;
+                media.currentTime = playhead.progress * media.duration;
+              },
+            },
+            0.02,
+          );
+        }
+
+        // The white wash: as the drone tops out, altitude becomes whiteness —
+        // the concrete brightens into the page's own ground.
+        if (whiteWash) {
+          reveal.fromTo(
+            whiteWash,
+            { opacity: 0 },
+            { opacity: 1, ease: "power1.in", duration: 0.16 },
+            0.8,
+          );
+        }
+
+        // The handoff: the sprite fades in at exactly the size and place the
+        // video's truck holds in its final frame, then eases to driving size
+        // (and, on phones, drifts from the video's centre into its lane).
+        reveal
+          .fromTo(
+            truck.current,
+            { autoAlpha: 0 },
+            { autoAlpha: 1, ease: "none", duration: 0.08 },
+            0.84,
+          )
+          .fromTo(
+            truck.current,
+            {
+              scale: matchScale,
+              x: () => (narrow() ? -0.35 * window.innerWidth : 0),
+              y: matchY,
+            },
+            {
+              scale: 1,
+              x: 0,
+              y: driveY,
+              ease: "power1.inOut",
+              duration: 0.16,
+              immediateRender: false,
+            },
+            0.84,
+          );
       }
 
       /* -- the road: one continuous drive --------------------------------- */

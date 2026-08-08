@@ -1,40 +1,127 @@
 /* ===========================================================================
-   BEAT 1b — THE REVEAL (the drone rises)
+   BEAT 1b — THE REVEAL (the drone rises — real footage)
 
-   One continuous camera move, no cuts. The visitor has been staring at the
-   yellow container surface (the fixed curtain from Beat 0/1). Here the
-   "drone" rises: the surface shrinks away and the SAME container turns out
-   to be riding on the top-down truck — the very element that then drives
-   down the whole page. There is no second photograph; continuity comes from
-   the fact that it is literally one fixed element from here to the flight
-   handoff.
+   One continuous camera move, now with real motion. The visitor has been
+   staring at the yellow container surface (the fixed curtain from Beat 0/1).
+   Here a scroll-scrubbed video takes over: a true top-down drone shot that
+   starts inches above the container and rises straight up, revealing the
+   truck driving beneath — wheels rolling, ground sliding past. At the top of
+   the rise a white wash brightens the frame and the fixed sprite truck takes
+   over at the exact size the video left it, then drives the rest of the page.
 
-   This component is only the markup: a transparent pinned viewport
-   (`#reveal-zone`) and a white backdrop (`#reveal-backdrop`) that fades in
-   underneath the zoom. The timeline that drives it lives in JourneyLayers,
-   because the star of the scene — the truck — belongs to it, and the pinned
-   element must never contain the fixed layers (a pinned ancestor's leftover
-   transform captures fixed descendants — see Beat 0).
+   The video is a salvaged cut of a Veo take (public/media/reveal-rise-src
+   .mp4): the first 5.25s are one perfect monotonic rise before the camera
+   descended again, so the encode stops at the apex. Portrait on purpose —
+   native fit on phones, centre-cropped by object-cover on desktop. Encoded
+   like the hero: 12fps, EVERY frame a keyframe, which is what makes seeking
+   smooth.
 
-   Until the pin engages the section is fully transparent, so the curtain
-   face stays on screen right up to the moment the zoom starts. The white
-   backdrop switches on under cover of `#face-zoom` (a fixed, pixel-identical
-   copy of the curtain), which is what makes the handoff invisible.
+   This component owns the markup and the video loading; the timeline that
+   drives everything (face crossfade, scrub, white wash, sprite handoff)
+   lives in JourneyLayers, because the handoff's star is its fixed truck.
+
+   LOADING mirrors the hero: no src until the preloader is done and the page
+   is idle, so the file never competes with startup. Until then the poster
+   (the video's own first frame) carries the section. A muted play/pause
+   primes the decoder once data arrives — browsers refuse to seek a video
+   the decoder has never seen.
 
    Reduced motion: nothing. There are no fixed travellers, so the story goes
    straight from the container face to the road sections.
    =========================================================================== */
 
+import { useEffect, useRef, useState } from "react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
-export function Beat1bReveal() {
+const VIDEO_SRC = "/media/reveal-rise.mp4";
+const POSTER_SRC = "/media/reveal-rise-poster.jpg";
+
+type Beat1bRevealProps = {
+  /** True once the preloader has finished. Gates the video download. */
+  ready?: boolean;
+};
+
+export function Beat1bReveal({ ready = false }: Beat1bRevealProps) {
   const reducedMotion = useReducedMotion();
+  const video = useRef<HTMLVideoElement>(null);
+  const [activeSrc, setActiveSrc] = useState<string | null>(null);
+
+  /* -- start the download once the page is out of the way ------------------ */
+  useEffect(() => {
+    if (reducedMotion || !ready) return;
+
+    let cancelled = false;
+    const begin = () => {
+      if (!cancelled) setActiveSrc(VIDEO_SRC);
+    };
+
+    const idle = window.requestIdleCallback;
+    if (typeof idle === "function") {
+      const handle = idle(begin, { timeout: 2000 });
+      return () => {
+        cancelled = true;
+        window.cancelIdleCallback?.(handle);
+      };
+    }
+
+    const timer = window.setTimeout(begin, 600);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [ready, reducedMotion]);
+
+  /* -- prime the decoder so the first scrub shows a frame ------------------- */
+  useEffect(() => {
+    const element = video.current;
+    if (!element || reducedMotion || !activeSrc) return;
+
+    const prime = () => {
+      element
+        .play()
+        .then(() => element.pause())
+        .catch(() => {
+          /* autoplay refused — the poster stays up, which is fine */
+        });
+      ScrollTrigger.refresh();
+    };
+
+    if (element.readyState >= 2) prime();
+    else element.addEventListener("loadeddata", prime, { once: true });
+
+    return () => element.removeEventListener("loadeddata", prime);
+  }, [reducedMotion, activeSrc]);
 
   if (reducedMotion) return null;
 
   return (
-    <section id="reveal-zone" aria-hidden="true" className="relative z-30 h-[100svh]">
-      <div id="reveal-backdrop" className="invisible absolute inset-0 bg-page" />
+    <section
+      id="reveal-zone"
+      aria-hidden="true"
+      className="relative z-30 h-[100svh] overflow-hidden"
+    >
+      {/* Invisible until the pin engages (JourneyLayers switches it on under
+          cover of #face-zoom). Absolute, not fixed — absolute children ride
+          along with the pinned section safely. */}
+      <div id="reveal-backdrop" className="invisible absolute inset-0 bg-page">
+        <video
+          id="reveal-video"
+          ref={video}
+          key={activeSrc ?? "idle"}
+          src={activeSrc ?? undefined}
+          poster={POSTER_SRC}
+          muted
+          playsInline
+          preload={activeSrc ? "auto" : "none"}
+          tabIndex={-1}
+          className="h-full w-full object-cover"
+        />
+        {/* The white wash: altitude becomes whiteness at the top of the rise,
+            which is where the sprite truck takes over on the page's ground. */}
+        <div id="reveal-white" className="absolute inset-0 bg-page opacity-0" />
+      </div>
     </section>
   );
 }

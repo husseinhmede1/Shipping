@@ -126,7 +126,7 @@ export default function App() {
             JourneyLayers, whose fixed truck is the star of the scene. Sits
             OUTSIDE the opaque wrapper so the curtain face stays visible right
             up to the pin. */}
-        <Beat1bReveal />
+        <Beat1bReveal ready={loaded} />
 
         {/* Opaque wrapper above the fixed container-face curtain (z-20).
             Without it, every page-toned (transparent) section after Beat 1
