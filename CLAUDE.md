@@ -91,17 +91,20 @@ The page is one continuous "drone shot" — ONE truck element, no camera cuts.
 **Beat 0**: a scroll-scrubbed dock video pinned behind the opening lines; at
 the end of its pin a yellow container face (`#container-curtain`, rendered in
 App, driven by the hero's timeline) descends over the hero and becomes Beat
-1's fixed background. **Beat 1b (reveal)**: the drone rises — real footage,
-scrubbed by scroll. A pinned viewport (`#reveal-zone`) holds a portrait
-1080x1920 Veo clip (`reveal-rise.mp4`, 12fps all-keyframe like the hero,
-deferred load + decoder priming, poster = its own first frame): a true
-top-down shot rising from inches above the container to high over the
-driving truck. At pin start `#face-zoom` (fixed z-40 copy of the curtain)
-switches on invisibly and dissolves into the moving footage. At the top of
-the rise a white wash (`#reveal-white`) brightens the frame and the fixed
-sprite truck fades in at the exact size/position of the truck in the video's
-final frame (VIDEO_TRUCK_H=636 source px, matched via the object-cover
-scale), then eases to driving size. The raw take (`reveal-rise-src.mp4`)
+1's fixed background. THE CURTAIN IMAGE IS THE REVEAL VIDEO'S FIRST FRAME
+(`curtain-rise.webp/jpg`) — that identity is the whole transition. **Beat 1b
+(reveal)**: a pinned viewport (`#reveal-zone`) holds a portrait 1080x1920
+Veo clip (`reveal-rise.mp4`, 12fps all-keyframe like the hero, deferred
+load + decoder priming, poster = the curtain image): a true top-down shot
+rising from inches above the container to high over the driving truck. At
+pin start the video stack switches on pixel-identically over the curtain
+(same object-cover box, same gradient + grain overlays duplicated on both) —
+NO crossfade exists anywhere; an earlier dissolve between mismatched
+textures read as a double exposure. At the top of the rise a white wash
+(`#reveal-white`) brightens the frame and the fixed sprite truck fades in at
+the exact size/position of the truck in the video's final frame
+(VIDEO_TRUCK_H=636 source px, matched via the object-cover scale), then
+eases to driving size. The raw take (`reveal-rise-src.mp4`)
 arcs up-then-down; the encode stops at the apex (t=5.25s). Portrait is
 deliberate: native on phones, centre-cropped by object-cover on desktop. **The road**
 (`#road`): the SAME fixed truck (`JourneyLayers.tsx`) drives down the page

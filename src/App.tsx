@@ -70,51 +70,36 @@ export default function App() {
       <main>
         <Beat0Hero ready={loaded} />
 
-        {/* The container-face curtain. Driven by the hero's timeline: descends
+        {/* The container curtain. Driven by the hero's timeline: descends
             over the hero at the end of its pin, then stays fixed as Beat 1's
             background. Lives here because it must not sit inside the pinned
             hero (transformed ancestors capture fixed children). z-20: above
-            the hero, below Beat 1's content and the z-30 wrapper below. */}
+            the hero, below Beat 1's content and the z-30 wrapper below.
+
+            CRITICAL: the image is the reveal video's own FIRST FRAME
+            (curtain-rise), rendered exactly as the video renders it (fixed
+            full-viewport object-cover). When the reveal pin engages and the
+            video appears, not a single pixel changes — the picture simply
+            starts moving. That identity is the transition; there is no
+            crossfade anywhere (an earlier dissolve between two mismatched
+            container textures read as a double exposure). */}
         <div
           id="container-curtain"
           aria-hidden="true"
           className="invisible fixed inset-0 z-20 pointer-events-none"
         >
           <picture>
-            <source srcSet="/media/bg-container-face.webp" type="image/webp" />
+            <source srcSet="/media/curtain-rise.webp" type="image/webp" />
             <img
-              src="/media/bg-container-face.jpg"
+              src="/media/curtain-rise.jpg"
               alt=""
               loading="lazy"
               decoding="async"
               className="h-full w-full object-cover"
             />
           </picture>
-          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
-          <div className="film-grain absolute inset-0" />
-        </div>
-
-        {/* A second copy of the container face for the zoom-out reveal.
-            Beat1bReveal switches it on at pin start (pixel-identical to the
-            curtain, so the switch is invisible) and scales it down. z-40:
-            above the z-30 sections, below the z-50 header. Kept out of the
-            pinned section for the same containing-block reason as the
-            curtain. */}
-        <div
-          id="face-zoom"
-          aria-hidden="true"
-          className="invisible fixed inset-0 z-40 pointer-events-none"
-        >
-          <picture>
-            <source srcSet="/media/bg-container-face.webp" type="image/webp" />
-            <img
-              src="/media/bg-container-face.jpg"
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover"
-            />
-          </picture>
+          {/* These two overlays are duplicated on the reveal's video stack —
+              both stacks must render identically for the invisible switch. */}
           <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
           <div className="film-grain absolute inset-0" />
         </div>

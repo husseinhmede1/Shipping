@@ -36,7 +36,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
 const VIDEO_SRC = "/media/reveal-rise.mp4";
-const POSTER_SRC = "/media/reveal-rise-poster.jpg";
+// The poster is the same image the curtain shows — one more layer of the
+// "nothing changes at the switch" guarantee, even before the file arrives.
+const POSTER_SRC = "/media/curtain-rise.jpg";
 
 type Beat1bRevealProps = {
   /** True once the preloader has finished. Gates the video download. */
@@ -102,9 +104,12 @@ export function Beat1bReveal({ ready = false }: Beat1bRevealProps) {
       aria-hidden="true"
       className="relative z-30 h-[100svh] overflow-hidden"
     >
-      {/* Invisible until the pin engages (JourneyLayers switches it on under
-          cover of #face-zoom). Absolute, not fixed — absolute children ride
-          along with the pinned section safely. */}
+      {/* Invisible until the pin engages. The switch-on is invisible because
+          the curtain behind IS this video's first frame, rendered the same
+          way (full-viewport object-cover) with the same two overlays below —
+          not a pixel changes, the picture just starts moving. Absolute, not
+          fixed — absolute children ride along with the pinned section
+          safely. */}
       <div id="reveal-backdrop" className="invisible absolute inset-0 bg-page">
         <video
           id="reveal-video"
@@ -118,6 +123,9 @@ export function Beat1bReveal({ ready = false }: Beat1bRevealProps) {
           tabIndex={-1}
           className="h-full w-full object-cover"
         />
+        {/* Duplicates of the curtain's overlays — see App. */}
+        <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
+        <div className="film-grain absolute inset-0" />
         {/* The white wash: altitude becomes whiteness at the top of the rise,
             which is where the sprite truck takes over on the page's ground. */}
         <div id="reveal-white" className="absolute inset-0 bg-page opacity-0" />

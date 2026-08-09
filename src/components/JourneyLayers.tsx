@@ -3,10 +3,8 @@
 
    Fixed, viewport-anchored elements that the scroll story drives:
 
-     truck   THE element of the page. It first appears under the shrinking
-             container face in the reveal (`#reveal-zone`): the "drone" rises
-             off the container surface and the whole truck emerges — same
-             container, same weathering, same code. The same element then
+     truck   THE element of the page. It takes over from the reveal video's
+             final frame (`#reveal-zone`) at matched size and position, then
              drives down the page centre through Order, Ledger, Pipeline and
              Journey (`#road`), and finally shrinks away as the camera keeps
              rising into the flight zone.
@@ -25,14 +23,12 @@
    cloud-front(4) < truck(5) < section content(10).
 
    THE REVEAL TIMELINE lives here (not in Beat1bReveal) because its star is
-   the truck. At pin start, `#face-zoom` (a fixed, pixel-identical copy of
-   the curtain) switches on — invisible switch — and under it the white
-   backdrop and the truck (scaled 3.5x, container roof forward) switch on.
-   The face then shrinks and fades while the truck scales down to driving
-   size: the container the visitor was staring at becomes the container on
-   the truck. transform-origin sits on the container (50% 30% of the sprite)
-   so the zoom pivots around it, and y never changes across the reveal/road
-   boundary — which is what makes the handoff seamless in both directions.
+   the truck. There is NO crossfade in the reveal: the curtain the visitor
+   has been staring at IS the reveal video's first frame, so switching the
+   video stack on at pin start changes nothing on screen — the picture just
+   starts moving. The scroll then scrubs the drone rise; at the apex a white
+   wash brightens the frame and the fixed sprite truck fades in matched to
+   the video truck's final size and position, then eases to driving size.
 
    The truck drives down the CENTRE on desktop — the road sections keep
    their middle column empty for it. On phones there is no empty centre, so
@@ -87,7 +83,6 @@ export function JourneyLayers() {
       if (revealZone) {
         const backdrop = document.getElementById("reveal-backdrop");
         const whiteWash = document.getElementById("reveal-white");
-        const face = document.getElementById("face-zoom");
 
         const narrow = () => window.innerWidth < 768;
         const coverScale = () =>
@@ -116,23 +111,12 @@ export function JourneyLayers() {
           },
         });
 
-        // The video stack switches on at pin start, hidden under face-zoom.
+        // The video stack switches on at pin start. The switch is invisible
+        // because the curtain behind renders this video's first frame in an
+        // identical box — no crossfade exists anywhere in this transition.
         // fromTo (never .set) so scrubbing back above the pin restores it.
         if (backdrop) {
           reveal.fromTo(backdrop, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, 0);
-        }
-
-        if (face) {
-          reveal.fromTo(face, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, 0);
-          reveal.fromTo(
-            face,
-            { scale: 1, transformOrigin: "50% 50%" },
-            { scale: 0.5, ease: "power1.in", duration: 0.34, immediateRender: false },
-            0.02,
-          );
-          // The face dissolves into the moving footage beneath — a flat
-          // texture melting into the same texture with real motion.
-          reveal.to(face, { autoAlpha: 0, ease: "none", duration: 0.22 }, 0.12);
         }
 
         // Scrub the footage across the middle of the pin. Proxy playhead as
