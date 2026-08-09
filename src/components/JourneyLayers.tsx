@@ -407,7 +407,11 @@ export function JourneyLayers() {
             alt=""
             loading="lazy"
             decoding="async"
-            className="w-[clamp(64px,10vw,150px)]"
+            // Width capped by BOTH axes: 10vw for narrow screens, 13.5vh for
+            // short/wide laptops — the sprite is ~4.1x taller than wide, and
+            // it rides at y=30vh, so width must stay under ~13.5vh or the cab
+            // falls below the fold on short viewports (owner report).
+            className="w-[clamp(64px,min(10vw,13.5vh),150px)]"
           />
         </picture>
       </div>
