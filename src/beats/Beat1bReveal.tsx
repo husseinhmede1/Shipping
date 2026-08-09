@@ -109,18 +109,31 @@ export function Beat1bReveal({ ready = false }: Beat1bRevealProps) {
           still until the flash swaps them. Absolute, not fixed — absolute
           children ride along with the pinned section safely. */}
       <div id="reveal-backdrop" className="invisible absolute inset-0 bg-page">
-        <video
-          id="reveal-video"
-          ref={video}
-          key={activeSrc ?? "idle"}
-          src={activeSrc ?? undefined}
-          poster={POSTER_SRC}
-          muted
-          playsInline
-          preload={activeSrc ? "auto" : "none"}
-          tabIndex={-1}
-          className="h-full w-full object-cover"
-        />
+        {/* THE STRIP. On desktop the portrait footage plays in a centred
+            vertical lane at (or below) its native 1080px width, on the
+            page's white — the browser DOWNSCALES it, which reads sharp;
+            stretching it full-bleed (1.8x upscale) could never be sharp and
+            kept getting called out. This is also literally the storyboard:
+            the truck travelling down a centre lane with white either side.
+            On phones the strip is the full viewport — the portrait file is
+            native there. */}
+        <div
+          id="reveal-strip"
+          className="absolute top-0 left-1/2 h-full w-full -translate-x-1/2 overflow-hidden md:w-[clamp(380px,40vw,640px)] md:shadow-float"
+        >
+          <video
+            id="reveal-video"
+            ref={video}
+            key={activeSrc ?? "idle"}
+            src={activeSrc ?? undefined}
+            poster={POSTER_SRC}
+            muted
+            playsInline
+            preload={activeSrc ? "auto" : "none"}
+            tabIndex={-1}
+            className="h-full w-full object-cover"
+          />
+        </div>
         {/* Duplicates of the curtain's overlays — see App. */}
         <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
         <div className="film-grain absolute inset-0" />

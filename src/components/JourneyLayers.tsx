@@ -87,8 +87,13 @@ export function JourneyLayers() {
         const flash = document.getElementById("reveal-flash");
 
         const narrow = () => window.innerWidth < 768;
-        const coverScale = () =>
-          Math.max(window.innerWidth / VIDEO_W, window.innerHeight / VIDEO_H);
+        // The footage plays inside the centred strip, not full-bleed — its
+        // object-cover scale comes from the strip's width, not the viewport's.
+        const coverScale = () => {
+          const strip = document.getElementById("reveal-strip");
+          const w = strip?.clientWidth || window.innerWidth;
+          return Math.max(w / VIDEO_W, window.innerHeight / VIDEO_H);
+        };
         // Sprite scale that makes it the same size as the truck in the
         // video's final frame, and the y that centres it where the video
         // truck sits (mid-frame; origin is the sprite's centre).

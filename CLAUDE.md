@@ -105,8 +105,12 @@ deferred load + decoder priming), scrubbed to the top of the rise. There a
 white wash (`#reveal-white`) brightens the frame and the fixed sprite truck
 fades in at the exact size/position of the video's final-frame truck
 (VIDEO_TRUCK_H=636 source px via the object-cover scale), then eases to
-driving size. Portrait footage is deliberate: native on phones,
-centre-cropped by object-cover on desktop. **The road**
+driving size. Portrait footage is deliberate — and on desktop it plays in
+a CENTRED VERTICAL STRIP (`#reveal-strip`, clamp(380px,40vw,640px)) on the
+page white, never full-bleed: at/below native width the browser downscales
+and the footage reads sharp, where the 1.8x full-bleed upscale could never
+be. The strip is also literally the storyboard: the truck's centre lane
+with white either side. On phones the strip is the full viewport (native). **The road**
 (`#road`): the SAME fixed truck (`JourneyLayers.tsx`) drives down the page
 centre through Order, Ledger, Pipeline and Journey — all four are light
 two-column sections with an empty centre lane (Beat 4's old dark pinned stage
