@@ -80,11 +80,13 @@ export function JourneyLayers() {
 
         const narrow = () => window.innerWidth < 768;
 
+        // 140%, not more — the owner flagged the section-2-to-Order stretch
+        // as a long scroll where nothing happens. Keep this tight.
         const reveal = gsap.timeline({
           scrollTrigger: {
             trigger: revealZone,
             start: "top top",
-            end: "+=250%",
+            end: "+=140%",
             pin: revealZone,
             scrub: 0.8,
             anticipatePin: 1,
@@ -105,13 +107,13 @@ export function JourneyLayers() {
           reveal.fromTo(
             face,
             { scale: 1, transformOrigin: "50% 50%" },
-            { scale: 1.55, ease: "power2.in", duration: 0.28, immediateRender: false },
+            { scale: 1.55, ease: "power2.in", duration: 0.24, immediateRender: false },
             0.02,
           );
           // ...and is dropped ONLY while the flash below is at full white —
           // the still and the truck never share the screen. A crossfade
           // between container textures read as a double exposure.
-          reveal.to(face, { autoAlpha: 0, ease: "none", duration: 0.02 }, 0.32);
+          reveal.to(face, { autoAlpha: 0, ease: "none", duration: 0.02 }, 0.27);
         }
 
         // The exposure flash: blows out to full white as the drone clears
@@ -123,9 +125,9 @@ export function JourneyLayers() {
               flash,
               { opacity: 0 },
               { opacity: 1, ease: "power2.in", duration: 0.1 },
-              0.22,
+              0.17,
             )
-            .to(flash, { opacity: 0, ease: "power1.out", duration: 0.14 }, 0.36);
+            .to(flash, { opacity: 0, ease: "power1.out", duration: 0.12 }, 0.3);
         }
 
         // The truck appears under full flash cover at container-filling
@@ -137,7 +139,7 @@ export function JourneyLayers() {
           truck.current,
           { autoAlpha: 0 },
           { autoAlpha: 1, duration: 0.02 },
-          0.33,
+          0.28,
         );
         reveal.fromTo(
           truck.current,
@@ -152,13 +154,13 @@ export function JourneyLayers() {
             x: 0,
             y: driveY,
             ease: "power2.inOut",
-            duration: 0.52,
+            duration: 0.64,
             immediateRender: false,
           },
-          0.36,
+          0.3,
         );
-        // Hold the whole truck for a beat before the road takes over.
-        reveal.to({}, { duration: 0.1 });
+        // The last 6% is the un-pin ramp — no hold; the road takes over
+        // immediately so the empty-white stretch stays short.
 
         // The ground fades in with the flash-clear and out near the top of
         // the climb (high enough that surface texture disappears).
@@ -169,9 +171,9 @@ export function JourneyLayers() {
               groundLane,
               { autoAlpha: 0 },
               { autoAlpha: 1, ease: "none", duration: 0.1 },
-              0.36,
+              0.3,
             )
-            .to(groundLane, { autoAlpha: 0, ease: "none", duration: 0.12 }, 0.82);
+            .to(groundLane, { autoAlpha: 0, ease: "none", duration: 0.1 }, 0.86);
 
           // Constant drift — driving speed, independent of scroll. The roll
           // translates by exactly one tile (50% of the two-image stack) and

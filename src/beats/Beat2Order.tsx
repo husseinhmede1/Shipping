@@ -21,7 +21,13 @@ import { copy } from "@/content/copy";
 
 export function Beat2Order() {
   return (
-    <Section id="the-order" labelledBy="order-heading" className="relative z-10">
+    <Section
+      id="the-order"
+      labelledBy="order-heading"
+      // Tight top padding: the reveal ends just above, and the owner flagged
+      // the empty-white stretch before this heading as wasted scrolling.
+      className="relative z-10 pt-10 md:pt-12"
+    >
       <div className="grid gap-12 md:grid-cols-2 md:items-center md:gap-x-[clamp(5rem,16vw,15rem)]">
         <div data-lane="left">
           <h2
