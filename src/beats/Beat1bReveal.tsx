@@ -1,20 +1,21 @@
 /* ===========================================================================
    BEAT 1b — THE REVEAL (the drone rises — real footage)
 
-   One continuous camera move, now with real motion. The visitor has been
-   staring at the yellow container surface (the fixed curtain from Beat 0/1).
-   Here a scroll-scrubbed video takes over: a true top-down drone shot that
-   starts inches above the container and rises straight up, revealing the
-   truck driving beneath — wheels rolling, ground sliding past. At the top of
-   the rise a white wash brightens the frame and the fixed sprite truck takes
-   over at the exact size the video left it, then drives the rest of the page.
+   The take-off: the sharp face still (the curtain) pushes in, the frame
+   blows out to a white exposure flash, and when it clears the real footage
+   is already moving — drone rising off the driving truck, scrubbed by
+   scroll. The still and the footage never share the screen (a crossfade
+   between them read as a double exposure), and the footage's soft first
+   second is trimmed away entirely — Veo renders extreme close-ups blurry,
+   so the sharp still owns the close-up and the video owns the motion. At
+   the top of the rise a white wash brightens the frame and the fixed
+   sprite truck takes over at the exact size the video left it.
 
    The video is a salvaged cut of a Veo take (public/media/reveal-rise-src
-   .mp4): the first 5.25s are one perfect monotonic rise before the camera
-   descended again, so the encode stops at the apex. Portrait on purpose —
-   native fit on phones, centre-cropped by object-cover on desktop. Encoded
-   like the hero: 12fps, EVERY frame a keyframe, which is what makes seeking
-   smooth.
+   .mp4): t=1.2s to the apex of the rise at t=5.25s (the camera descends
+   again after — trimmed). Portrait on purpose — native fit on phones,
+   centre-cropped by object-cover on desktop. Encoded like the hero: 12fps,
+   EVERY frame a keyframe, which is what makes seeking smooth.
 
    This component owns the markup and the video loading; the timeline that
    drives everything (face crossfade, scrub, white wash, sprite handoff)
@@ -36,9 +37,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
 const VIDEO_SRC = "/media/reveal-rise.mp4";
-// The poster is the same image the curtain shows — one more layer of the
-// "nothing changes at the switch" guarantee, even before the file arrives.
-const POSTER_SRC = "/media/curtain-rise.jpg";
+// The video's own first frame (post-trim). Only ever seen under the white
+// flash if the file hasn't arrived yet.
+const POSTER_SRC = "/media/reveal-rise-poster.jpg";
 
 type Beat1bRevealProps = {
   /** True once the preloader has finished. Gates the video download. */
@@ -104,12 +105,9 @@ export function Beat1bReveal({ ready = false }: Beat1bRevealProps) {
       aria-hidden="true"
       className="relative z-30 h-[100svh] overflow-hidden"
     >
-      {/* Invisible until the pin engages. The switch-on is invisible because
-          the curtain behind IS this video's first frame, rendered the same
-          way (full-viewport object-cover) with the same two overlays below —
-          not a pixel changes, the picture just starts moving. Absolute, not
-          fixed — absolute children ride along with the pinned section
-          safely. */}
+      {/* Invisible until the pin engages, and hidden under the face-zoom
+          still until the flash swaps them. Absolute, not fixed — absolute
+          children ride along with the pinned section safely. */}
       <div id="reveal-backdrop" className="invisible absolute inset-0 bg-page">
         <video
           id="reveal-video"

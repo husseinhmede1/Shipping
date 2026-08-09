@@ -70,39 +70,69 @@ export default function App() {
       <main>
         <Beat0Hero ready={loaded} />
 
-        {/* The container curtain. Driven by the hero's timeline: descends
+        {/* The container-face curtain. Driven by the hero's timeline: descends
             over the hero at the end of its pin, then stays fixed as Beat 1's
             background. Lives here because it must not sit inside the pinned
             hero (transformed ancestors capture fixed children). z-20: above
             the hero, below Beat 1's content and the z-30 wrapper below.
-
-            CRITICAL: the image is the reveal video's own FIRST FRAME
-            (curtain-rise), rendered exactly as the video renders it (fixed
-            full-viewport object-cover). When the reveal pin engages and the
-            video appears, not a single pixel changes — the picture simply
-            starts moving. That identity is the transition; there is no
-            crossfade anywhere (an earlier dissolve between two mismatched
-            container textures read as a double exposure). */}
+            The image is the high-res face texture — the reveal video's own
+            first frames were tried here and looked terrible on desktop
+            (1080px portrait footage, dark and soft when blown up). */}
         <div
           id="container-curtain"
           aria-hidden="true"
           className="invisible fixed inset-0 z-20 pointer-events-none"
         >
           <picture>
-            <source srcSet="/media/curtain-rise.webp" type="image/webp" />
+            <source srcSet="/media/bg-container-face.webp" type="image/webp" />
             <img
-              src="/media/curtain-rise.jpg"
+              src="/media/bg-container-face.jpg"
               alt=""
               loading="lazy"
               decoding="async"
               className="h-full w-full object-cover"
             />
           </picture>
-          {/* These two overlays are duplicated on the reveal's video stack —
-              both stacks must render identically for the invisible switch. */}
           <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
           <div className="film-grain absolute inset-0" />
         </div>
+
+        {/* A second copy of the face for the reveal's take-off push-in. At
+            reveal pin start it switches on over everything (identical pixels
+            to the curtain = invisible switch), scales up as the "drone"
+            pushes off the wall, and is swapped for the moving footage under
+            full cover of the white flash below. z-40: above the z-30
+            sections, below the z-50 header. */}
+        <div
+          id="face-zoom"
+          aria-hidden="true"
+          className="invisible fixed inset-0 z-40 pointer-events-none"
+        >
+          <picture>
+            <source srcSet="/media/bg-container-face.webp" type="image/webp" />
+            <img
+              src="/media/bg-container-face.jpg"
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </picture>
+          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
+          <div className="film-grain absolute inset-0" />
+        </div>
+
+        {/* The exposure flash: a beat of pure white as the drone clears the
+            container's shadow into sunlight. It reaches FULL opacity for a
+            moment — that moment is when the sharp still is swapped for the
+            moving footage, so the two never overlap on screen (a crossfade
+            between them read as a double exposure). z-[45]: above face-zoom,
+            below the header. */}
+        <div
+          id="reveal-flash"
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 z-[45] bg-white opacity-0"
+        />
 
         <Beat1Chaos />
 

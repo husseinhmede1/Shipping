@@ -83,6 +83,8 @@ export function JourneyLayers() {
       if (revealZone) {
         const backdrop = document.getElementById("reveal-backdrop");
         const whiteWash = document.getElementById("reveal-white");
+        const face = document.getElementById("face-zoom");
+        const flash = document.getElementById("reveal-flash");
 
         const narrow = () => window.innerWidth < 768;
         const coverScale = () =>
@@ -111,15 +113,43 @@ export function JourneyLayers() {
           },
         });
 
-        // The video stack switches on at pin start. The switch is invisible
-        // because the curtain behind renders this video's first frame in an
-        // identical box — no crossfade exists anywhere in this transition.
+        // The video stack switches on at pin start, hidden under face-zoom.
         // fromTo (never .set) so scrubbing back above the pin restores it.
         if (backdrop) {
           reveal.fromTo(backdrop, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, 0);
         }
 
-        // Scrub the footage across the middle of the pin. Proxy playhead as
+        // TAKE-OFF. The sharp face still (identical to the curtain, so the
+        // switch-on is invisible) pushes in as the drone lifts off the wall...
+        if (face) {
+          reveal.fromTo(face, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, 0);
+          reveal.fromTo(
+            face,
+            { scale: 1, transformOrigin: "50% 50%" },
+            { scale: 1.55, ease: "power2.in", duration: 0.28, immediateRender: false },
+            0.02,
+          );
+          // ...and is dropped ONLY while the flash below is at full white —
+          // the still and the footage never share the screen. A crossfade
+          // between them read as a double exposure; this is the fix.
+          reveal.to(face, { autoAlpha: 0, ease: "none", duration: 0.02 }, 0.32);
+        }
+
+        // The exposure flash: blows out to full white as the drone clears
+        // the container's shadow into sunlight, then clears to reveal the
+        // footage already moving.
+        if (flash) {
+          reveal
+            .fromTo(
+              flash,
+              { opacity: 0 },
+              { opacity: 1, ease: "power2.in", duration: 0.1 },
+              0.22,
+            )
+            .to(flash, { opacity: 0, ease: "power1.out", duration: 0.14 }, 0.36);
+        }
+
+        // Scrub the footage across the rest of the pin. Proxy playhead as
         // in the hero: the file may not have arrived and duration is unknown
         // until metadata lands, so nothing is baked in at build time. The
         // element is resolved on EVERY update — Beat1bReveal remounts the
@@ -132,7 +162,7 @@ export function JourneyLayers() {
             {
               progress: 1,
               ease: "none",
-              duration: 0.8,
+              duration: 0.54,
               onUpdate: () => {
                 const media = document.getElementById(
                   "reveal-video",
@@ -141,7 +171,7 @@ export function JourneyLayers() {
                 media.currentTime = playhead.progress * media.duration;
               },
             },
-            0.02,
+            0.36,
           );
         }
 

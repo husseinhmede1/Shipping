@@ -31,9 +31,9 @@ export function Beat1Chaos() {
       {reducedMotion && (
         <div aria-hidden="true" className="absolute inset-0 -z-10">
           <picture>
-            <source srcSet="/media/curtain-rise.webp" type="image/webp" />
+            <source srcSet="/media/bg-container-face.webp" type="image/webp" />
             <img
-              src="/media/curtain-rise.jpg"
+              src="/media/bg-container-face.jpg"
               alt=""
               loading="lazy"
               decoding="async"
