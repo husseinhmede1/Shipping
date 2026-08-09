@@ -119,7 +119,7 @@ export function Beat1bReveal({ ready = false }: Beat1bRevealProps) {
             native there. */}
         <div
           id="reveal-strip"
-          className="absolute top-0 left-1/2 h-full w-full -translate-x-1/2 overflow-hidden md:w-[clamp(380px,40vw,640px)] md:shadow-float"
+          className="absolute top-0 left-1/2 h-full w-full -translate-x-1/2 overflow-hidden md:w-[clamp(380px,40vw,640px)] md:[mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]"
         >
           <video
             id="reveal-video"
