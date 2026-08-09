@@ -112,8 +112,12 @@ centre through Order, Ledger, Pipeline and Journey — all four are light
 two-column sections with an empty centre lane (Beat 4's old dark pinned stage
 sequence is gone per the owner's direction; its images stay in public/media).
 The truck's y is identical at the reveal's end and the road's start, so the
-handoff is seamless both directions. At the road's end the truck shrinks away
-— the camera keeps rising. **The flight zone** (`#flight-zone`, Beats 6–7): a
+handoff is seamless both directions. At the road's end the field (which has
+a vertical ROAD painted down its centre — regenerate via the grade+road
+script if bg-field changes) fades in, the truck drifts onto that road (on
+phones it also re-centres from its edge lane) and DRIVES OFF THE BOTTOM
+EDGE of the screen — a physical exit, per the owner, never a fade — and
+only then does the plane enter (flight timeline starts at 0.3). **The flight zone** (`#flight-zone`, Beats 6–7): a
 fixed olive-field backdrop with two screen-blended, independently drifting
 cloud layers (one under the plane, one over it) and a top-down plane that
 crosses and fades out before the closing form. Flight-zone content sits in

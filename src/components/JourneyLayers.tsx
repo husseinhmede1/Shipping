@@ -66,6 +66,8 @@ export function JourneyLayers() {
     // and the road starts here, so the element never jumps.
     const driveY = () => 0.3 * vh();
 
+    const narrow = () => window.innerWidth < 768;
+
     const context = gsap.context(() => {
       gsap.set(truck.current, { xPercent: -50, transformOrigin: "50% 50%" });
       gsap.set(plane.current, { xPercent: -50 });
@@ -77,8 +79,6 @@ export function JourneyLayers() {
         const face = document.getElementById("face-zoom");
         const flash = document.getElementById("reveal-flash");
         const groundRoll = document.getElementById("reveal-ground-roll");
-
-        const narrow = () => window.innerWidth < 768;
 
         // 140%, not more — the owner flagged the section-2-to-Order stretch
         // as a long scroll where nothing happens. Keep this tight.
@@ -209,12 +209,25 @@ export function JourneyLayers() {
             { y: () => 0.38 * vh(), ease: "none", duration: 0.85, immediateRender: false },
             0,
           )
-          // The handoff: the camera keeps rising, the truck shrinks away,
-          // and the flight zone's field + plane take over.
+          // Arriving at the field: on phones the truck drifts from its edge
+          // lane onto the road painted down the field's centre (no-op on
+          // desktop, where the lane IS the centre)...
           .to(
             truck.current,
-            { scale: 0.55, autoAlpha: 0, ease: "power1.in", duration: 0.15 },
-            0.85,
+            {
+              x: () => (narrow() ? -0.35 * window.innerWidth : 0),
+              ease: "power1.inOut",
+              duration: 0.08,
+            },
+            0.76,
+          )
+          // ...then drives OFF THE BOTTOM EDGE of the screen — a physical
+          // exit, not a fade (owner: "it comes out of the screen"). The
+          // plane only enters after it is gone.
+          .to(
+            truck.current,
+            { y: () => 1.3 * vh(), ease: "power1.in", duration: 0.16 },
+            0.84,
           );
       }
 
@@ -275,18 +288,20 @@ export function JourneyLayers() {
           },
         });
         flight
+          // Enters at 0.3, not 0 — the truck must first drive off the bottom
+          // of the screen (see the road timeline); only then the plane.
           .fromTo(
             plane.current,
             { y: () => -0.5 * vh(), autoAlpha: 0 },
-            { y: () => 0.18 * vh(), autoAlpha: 1, ease: "power1.out", duration: 0.18 },
-            0,
+            { y: () => 0.18 * vh(), autoAlpha: 1, ease: "power1.out", duration: 0.15 },
+            0.3,
           )
-          .to(plane.current, { y: () => 0.5 * vh(), ease: "none", duration: 0.64 }, 0.18)
+          .to(plane.current, { y: () => 0.5 * vh(), ease: "none", duration: 0.4 }, 0.45)
           // gone BEFORE the closing form arrives — the form stands alone
           .to(
             plane.current,
-            { y: () => 0.85 * vh(), autoAlpha: 0, ease: "power1.in", duration: 0.18 },
-            0.82,
+            { y: () => 0.85 * vh(), autoAlpha: 0, ease: "power1.in", duration: 0.15 },
+            0.85,
           );
 
         // Gentle lateral wander — planes never fly a pixel-straight line.
