@@ -66,45 +66,19 @@ export function JourneyLayers() {
     // and the road starts here, so the element never jumps.
     const driveY = () => 0.3 * vh();
 
-    // The reveal footage: portrait 1080x1920; at its final frame (the apex of
-    // the rise) the truck stands ~636px tall in source pixels. From that, the
-    // truck's on-screen height at any viewport is 636 * the object-cover
-    // scale — which is what the sprite must match at the moment it takes over.
-    const VIDEO_W = 1080;
-    const VIDEO_H = 1920;
-    const VIDEO_TRUCK_H = 636;
-
     const context = gsap.context(() => {
       gsap.set(truck.current, { xPercent: -50, transformOrigin: "50% 50%" });
       gsap.set(plane.current, { xPercent: -50 });
 
-      /* -- the reveal: real drone footage, scrubbed by scroll ------------- */
+      /* -- the reveal: take-off, flash, sprite zoom-out ------------------- */
       const revealZone = document.getElementById("reveal-zone");
       if (revealZone) {
         const backdrop = document.getElementById("reveal-backdrop");
-        const whiteWash = document.getElementById("reveal-white");
         const face = document.getElementById("face-zoom");
         const flash = document.getElementById("reveal-flash");
+        const groundRoll = document.getElementById("reveal-ground-roll");
 
         const narrow = () => window.innerWidth < 768;
-        // The footage plays inside the centred strip, not full-bleed — its
-        // object-cover scale comes from the strip's width, not the viewport's.
-        const coverScale = () => {
-          const strip = document.getElementById("reveal-strip");
-          const w = strip?.clientWidth || window.innerWidth;
-          return Math.max(w / VIDEO_W, window.innerHeight / VIDEO_H);
-        };
-        // Sprite scale that makes it the same size as the truck in the
-        // video's final frame, and the y that centres it where the video
-        // truck sits (mid-frame; origin is the sprite's centre).
-        const matchScale = () => {
-          const spriteH = truck.current?.offsetHeight || 1;
-          return (VIDEO_TRUCK_H * coverScale()) / spriteH;
-        };
-        const matchY = () => {
-          const spriteH = truck.current?.offsetHeight || 1;
-          return 0.5 * vh() - spriteH / 2;
-        };
 
         const reveal = gsap.timeline({
           scrollTrigger: {
@@ -118,7 +92,7 @@ export function JourneyLayers() {
           },
         });
 
-        // The video stack switches on at pin start, hidden under face-zoom.
+        // The white world switches on at pin start, hidden under face-zoom.
         // fromTo (never .set) so scrubbing back above the pin restores it.
         if (backdrop) {
           reveal.fromTo(backdrop, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, 0);
@@ -135,14 +109,14 @@ export function JourneyLayers() {
             0.02,
           );
           // ...and is dropped ONLY while the flash below is at full white —
-          // the still and the footage never share the screen. A crossfade
-          // between them read as a double exposure; this is the fix.
+          // the still and the truck never share the screen. A crossfade
+          // between container textures read as a double exposure.
           reveal.to(face, { autoAlpha: 0, ease: "none", duration: 0.02 }, 0.32);
         }
 
         // The exposure flash: blows out to full white as the drone clears
-        // the container's shadow into sunlight, then clears to reveal the
-        // footage already moving.
+        // the container's shadow into sunlight, then clears onto the truck
+        // already below — container roof forward, ground sliding past.
         if (flash) {
           reveal
             .fromTo(
@@ -154,70 +128,61 @@ export function JourneyLayers() {
             .to(flash, { opacity: 0, ease: "power1.out", duration: 0.14 }, 0.36);
         }
 
-        // Scrub the footage across the rest of the pin. Proxy playhead as
-        // in the hero: the file may not have arrived and duration is unknown
-        // until metadata lands, so nothing is baked in at build time. The
-        // element is resolved on EVERY update — Beat1bReveal remounts the
-        // <video> when the deferred src lands (key change), so any reference
-        // captured here would go stale and scrub a detached node.
-        {
-          const playhead = { progress: 0 };
-          reveal.to(
-            playhead,
-            {
-              progress: 1,
-              ease: "none",
-              duration: 0.54,
-              onUpdate: () => {
-                const media = document.getElementById(
-                  "reveal-video",
-                ) as HTMLVideoElement | null;
-                if (!media || media.readyState < 1 || !media.duration) return;
-                media.currentTime = playhead.progress * media.duration;
-              },
-            },
-            0.36,
-          );
-        }
+        // The truck appears under full flash cover at container-filling
+        // scale, then the camera climbs: scale eases down to driving size.
+        // The zoom pivots on the container (origin 50% 30%), y stays at
+        // driveY throughout — the road timeline picks it up with zero jump.
+        // On phones the zoom starts centred and drifts into the edge lane.
+        reveal.fromTo(
+          truck.current,
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: 0.02 },
+          0.33,
+        );
+        reveal.fromTo(
+          truck.current,
+          {
+            scale: () => (narrow() ? 5.5 : 3.5),
+            x: () => (narrow() ? -0.35 * window.innerWidth : 0),
+            y: driveY,
+            transformOrigin: "50% 30%",
+          },
+          {
+            scale: 1,
+            x: 0,
+            y: driveY,
+            ease: "power2.inOut",
+            duration: 0.52,
+            immediateRender: false,
+          },
+          0.36,
+        );
+        // Hold the whole truck for a beat before the road takes over.
+        reveal.to({}, { duration: 0.1 });
 
-        // The white wash: as the drone tops out, altitude becomes whiteness —
-        // the concrete brightens into the page's own ground.
-        if (whiteWash) {
-          reveal.fromTo(
-            whiteWash,
-            { opacity: 0 },
-            { opacity: 1, ease: "power1.in", duration: 0.16 },
-            0.8,
-          );
-        }
+        // The ground fades in with the flash-clear and out near the top of
+        // the climb (high enough that surface texture disappears).
+        if (groundRoll) {
+          const groundLane = groundRoll.parentElement;
+          reveal
+            .fromTo(
+              groundLane,
+              { autoAlpha: 0 },
+              { autoAlpha: 1, ease: "none", duration: 0.1 },
+              0.36,
+            )
+            .to(groundLane, { autoAlpha: 0, ease: "none", duration: 0.12 }, 0.82);
 
-        // The handoff: the sprite fades in at exactly the size and place the
-        // video's truck holds in its final frame, then eases to driving size
-        // (and, on phones, drifts from the video's centre into its lane).
-        reveal
-          .fromTo(
-            truck.current,
-            { autoAlpha: 0 },
-            { autoAlpha: 1, ease: "none", duration: 0.08 },
-            0.84,
-          )
-          .fromTo(
-            truck.current,
-            {
-              scale: matchScale,
-              x: () => (narrow() ? -0.35 * window.innerWidth : 0),
-              y: matchY,
-            },
-            {
-              scale: 1,
-              x: 0,
-              y: driveY,
-              ease: "power1.inOut",
-              duration: 0.16,
-              immediateRender: false,
-            },
-            0.84,
-          );
+          // Constant drift — driving speed, independent of scroll. The roll
+          // translates by exactly one tile (50% of the two-image stack) and
+          // repeats; the mirror-built tile hides the seam.
+          gsap.to(groundRoll, {
+            yPercent: -50,
+            ease: "none",
+            duration: 9,
+            repeat: -1,
+          });
+        }
       }
 
       /* -- the road: one continuous drive --------------------------------- */

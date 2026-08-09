@@ -1,101 +1,37 @@
 /* ===========================================================================
-   BEAT 1b — THE REVEAL (the drone rises — real footage)
+   BEAT 1b — THE REVEAL (the drone rises)
 
-   The take-off: the sharp face still (the curtain) pushes in, the frame
-   blows out to a white exposure flash, and when it clears the real footage
-   is already moving — drone rising off the driving truck, scrubbed by
-   scroll. The still and the footage never share the screen (a crossfade
-   between them read as a double exposure), and the footage's soft first
-   second is trimmed away entirely — Veo renders extreme close-ups blurry,
-   so the sharp still owns the close-up and the video owns the motion. At
-   the top of the rise a white wash brightens the frame and the fixed
-   sprite truck takes over at the exact size the video left it.
+   The take-off, sprite edition — sharp at every altitude. The visitor has
+   been staring at the container face (the fixed curtain from Beat 0/1). The
+   face pushes in as the drone lifts off the wall, the frame blows out to a
+   white exposure flash, and when it clears the top-down truck sprite is
+   there at container-filling scale, shrinking as the camera climbs — over a
+   faintly moving ground that sells the driving. The truck that lands from
+   this zoom IS the fixed truck that drives the whole page: one element, no
+   handoff, no seams.
 
-   The video is a salvaged cut of a Veo take (public/media/reveal-rise-src
-   .mp4): t=1.2s to the apex of the rise at t=5.25s (the camera descends
-   again after — trimmed). Portrait on purpose — native fit on phones,
-   centre-cropped by object-cover on desktop. Encoded like the hero: 12fps,
-   EVERY frame a keyframe, which is what makes seeking smooth.
+   Veo footage was tried here twice and retired: its 1080px frames could
+   never be sharp on desktop, its close-ups carry baked-in motion blur, and
+   its concrete world clashed with the page. The sprite (590x2435 cutout) is
+   crisper than the footage at every scale the zoom passes through, and the
+   ground layer below — a seamless loop cut from the white-graded footage —
+   restores the "wheels rolling, ground sliding" life that made video
+   tempting. The still face and the sprite never share the screen: the flash
+   reaches full white for the swap (a crossfade read as a double exposure).
 
-   This component owns the markup and the video loading; the timeline that
-   drives everything (face crossfade, scrub, white wash, sprite handoff)
-   lives in JourneyLayers, because the handoff's star is its fixed truck.
-
-   LOADING mirrors the hero: no src until the preloader is done and the page
-   is idle, so the file never competes with startup. Until then the poster
-   (the video's own first frame) carries the section. A muted play/pause
-   primes the decoder once data arrives — browsers refuse to seek a video
-   the decoder has never seen.
+   This component is only the markup: the white backdrop and the ground
+   lane. The timeline lives in JourneyLayers, whose fixed truck is the star.
+   The pinned element must never contain the fixed layers (a pinned
+   ancestor's leftover transform captures fixed descendants — see Beat 0).
 
    Reduced motion: nothing. There are no fixed travellers, so the story goes
    straight from the container face to the road sections.
    =========================================================================== */
 
-import { useEffect, useRef, useState } from "react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
-const VIDEO_SRC = "/media/reveal-rise.mp4";
-// The video's own first frame (post-trim). Only ever seen under the white
-// flash if the file hasn't arrived yet.
-const POSTER_SRC = "/media/reveal-rise-poster.jpg";
-
-type Beat1bRevealProps = {
-  /** True once the preloader has finished. Gates the video download. */
-  ready?: boolean;
-};
-
-export function Beat1bReveal({ ready = false }: Beat1bRevealProps) {
+export function Beat1bReveal() {
   const reducedMotion = useReducedMotion();
-  const video = useRef<HTMLVideoElement>(null);
-  const [activeSrc, setActiveSrc] = useState<string | null>(null);
-
-  /* -- start the download once the page is out of the way ------------------ */
-  useEffect(() => {
-    if (reducedMotion || !ready) return;
-
-    let cancelled = false;
-    const begin = () => {
-      if (!cancelled) setActiveSrc(VIDEO_SRC);
-    };
-
-    const idle = window.requestIdleCallback;
-    if (typeof idle === "function") {
-      const handle = idle(begin, { timeout: 2000 });
-      return () => {
-        cancelled = true;
-        window.cancelIdleCallback?.(handle);
-      };
-    }
-
-    const timer = window.setTimeout(begin, 600);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [ready, reducedMotion]);
-
-  /* -- prime the decoder so the first scrub shows a frame ------------------- */
-  useEffect(() => {
-    const element = video.current;
-    if (!element || reducedMotion || !activeSrc) return;
-
-    const prime = () => {
-      element
-        .play()
-        .then(() => element.pause())
-        .catch(() => {
-          /* autoplay refused — the poster stays up, which is fine */
-        });
-      ScrollTrigger.refresh();
-    };
-
-    if (element.readyState >= 2) prime();
-    else element.addEventListener("loadeddata", prime, { once: true });
-
-    return () => element.removeEventListener("loadeddata", prime);
-  }, [reducedMotion, activeSrc]);
 
   if (reducedMotion) return null;
 
@@ -105,41 +41,44 @@ export function Beat1bReveal({ ready = false }: Beat1bRevealProps) {
       aria-hidden="true"
       className="relative z-30 h-[100svh] overflow-hidden"
     >
-      {/* Invisible until the pin engages, and hidden under the face-zoom
-          still until the flash swaps them. Absolute, not fixed — absolute
-          children ride along with the pinned section safely. */}
+      {/* Invisible until the pin engages; revealed under cover of the white
+          flash. Absolute, not fixed — absolute children ride along with the
+          pinned section safely. */}
       <div id="reveal-backdrop" className="invisible absolute inset-0 bg-page">
-        {/* THE STRIP. On desktop the portrait footage plays in a centred
-            vertical lane at (or below) its native 1080px width, on the
-            page's white — the browser DOWNSCALES it, which reads sharp;
-            stretching it full-bleed (1.8x upscale) could never be sharp and
-            kept getting called out. This is also literally the storyboard:
-            the truck travelling down a centre lane with white either side.
-            On phones the strip is the full viewport — the portrait file is
-            native there. */}
+        {/* The ground: a centred lane (the storyboard's centre lane, white
+            either side) with a seamless concrete loop that JourneyLayers
+            scrolls continuously — the motion under the truck that reads as
+            driving. Edges fade into the page; the texture itself is cut from
+            the white-graded footage so the worlds match. */}
         <div
-          id="reveal-strip"
+          id="reveal-ground"
           className="absolute top-0 left-1/2 h-full w-full -translate-x-1/2 overflow-hidden md:w-[clamp(380px,40vw,640px)] md:[mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]"
         >
-          <video
-            id="reveal-video"
-            ref={video}
-            key={activeSrc ?? "idle"}
-            src={activeSrc ?? undefined}
-            poster={POSTER_SRC}
-            muted
-            playsInline
-            preload={activeSrc ? "auto" : "none"}
-            tabIndex={-1}
-            className="h-full w-full object-cover"
-          />
+          <div id="reveal-ground-roll" className="absolute top-0 left-0 w-full">
+            <picture>
+              <source srcSet="/media/fx-ground.webp" type="image/webp" />
+              <img
+                src="/media/fx-ground.jpg"
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="block w-full"
+              />
+            </picture>
+            {/* second copy: the roll translates by exactly one image and
+                snaps back — the mirror-built tile makes the seam invisible */}
+            <picture>
+              <source srcSet="/media/fx-ground.webp" type="image/webp" />
+              <img
+                src="/media/fx-ground.jpg"
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="block w-full"
+              />
+            </picture>
+          </div>
         </div>
-        {/* Duplicates of the curtain's overlays — see App. */}
-        <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
-        <div className="film-grain absolute inset-0" />
-        {/* The white wash: altitude becomes whiteness at the top of the rise,
-            which is where the sprite truck takes over on the page's ground. */}
-        <div id="reveal-white" className="absolute inset-0 bg-page opacity-0" />
       </div>
     </section>
   );
