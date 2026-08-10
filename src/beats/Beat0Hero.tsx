@@ -119,10 +119,13 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
     };
 
     // requestIdleCallback waits for a genuine gap in the main thread. The
-    // timeout is the backstop: on a busy page we still start within 1.5s.
+    // short timeout is the backstop: `ready` now fires while the preloader
+    // globe is still animating (images cached — see Preloader onWarm), and
+    // the globe's rAF loop keeps the thread busy enough that real idle
+    // rarely arrives — so in practice this IS the start delay.
     const idle = window.requestIdleCallback;
     if (typeof idle === "function") {
-      const handle = idle(begin, { timeout: 1500 });
+      const handle = idle(begin, { timeout: 400 });
       return () => {
         cancelled = true;
         window.cancelIdleCallback?.(handle);

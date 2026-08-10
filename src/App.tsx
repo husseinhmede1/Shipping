@@ -49,6 +49,9 @@ export default function App() {
   return (
     <>
       <Preloader
+        // The moment the loader's images are cached, start the hero video —
+        // it downloads behind the globe instead of after it.
+        onWarm={() => setLoaded(true)}
         onDone={() => {
           setLoaded(true);
           // Re-measure once the preloader has released its scroll lock. Any

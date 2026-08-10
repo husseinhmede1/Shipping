@@ -21,9 +21,23 @@ import { useReducedMotion } from "@/lib/useReducedMotion";
 import { brand } from "@/brand/brand.config";
 import { copy } from "@/content/copy";
 
-export function Preloader({ onDone }: { onDone: () => void }) {
-  const { progress, complete } = useLoadingProgress();
+export function Preloader({
+  onDone,
+  onWarm,
+}: {
+  onDone: () => void;
+  /** Fires as soon as the story images are cached — while the globe is still
+      up. App uses it to start the hero video download early, so the heavy
+      file loads behind the loader instead of after it. */
+  onWarm?: () => void;
+}) {
+  const { progress, complete, imagesDone } = useLoadingProgress();
   const reducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (imagesDone) onWarm?.();
+    // onWarm is stable in practice (a setState); re-firing on change is harmless.
+  }, [imagesDone, onWarm]);
 
   const overlay = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);

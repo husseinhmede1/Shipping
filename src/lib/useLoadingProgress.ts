@@ -1,26 +1,44 @@
 import { useEffect, useRef, useState } from "react";
-import { useProgress } from "@react-three/drei";
 
 /**
- * Loading progress for the preloader.
+ * Loading progress for the preloader — real work, not theatre.
  *
- * Combines three things so the number on screen is honest but never ugly:
- *   1. Real R3F asset progress from drei's `useProgress` (textures, models).
- *   2. Document readiness — so we also wait for fonts and images.
- *   3. A minimum display time, so a fast connection doesn't produce a
- *      100ms flash of loader.
+ * While the globe is up, every below-the-fold story image is fetched and the
+ * percentage tracks that genuine progress (blended with document readiness
+ * and a minimum display time so a fast connection doesn't produce a 100ms
+ * flash of loader). By the time the overlay dissolves, the whole journey's
+ * imagery is already in cache — the page opens fully dressed.
  *
- * There are no 3D assets in the scene yet (the globe is generated in code), so
- * real progress completes almost immediately. Append `?load=slow` to the URL to
- * stretch it out and actually watch the animation.
+ * `imagesDone` flips as soon as the manifest has landed; App uses it to start
+ * the hero video download WHILE the globe is still showing. The loader never
+ * waits for the video itself: it is ~9.5MB, and holding visitors hostage to
+ * it on a slow line is worse than the poster-first fallback.
+ *
+ * A failed image counts as done — a missing texture must never wedge the
+ * whole site behind the loader.
+ *
+ * Append `?load=slow` to stretch the animation for review.
  */
+
+// Everything the journey needs before first scroll, cheapest-effective set.
+// Keep in sync with the assets actually referenced in beats/JourneyLayers.
+const IMAGE_MANIFEST = [
+  "/media/hero-dock-poster.webp",
+  "/media/bg-container-face.webp",
+  "/media/sprite-truck-top.webp",
+  "/media/fx-ground.webp",
+  "/media/bg-field.webp",
+  "/media/fx-clouds.jpg",
+  "/media/sprite-plane-top.webp",
+];
+
 const MIN_DURATION_MS = 1800;
 const SLOW_DURATION_MS = 6000;
 
 export function useLoadingProgress() {
-  const { progress: assetProgress, active } = useProgress();
   const [progress, setProgress] = useState(0);
   const [complete, setComplete] = useState(false);
+  const [imagesDone, setImagesDone] = useState(false);
   const startedAt = useRef(performance.now());
 
   useEffect(() => {
@@ -28,19 +46,34 @@ export function useLoadingProgress() {
     const minDuration = slow ? SLOW_DURATION_MS : MIN_DURATION_MS;
 
     let frame = 0;
+    let loadedImages = 0;
     let documentReady = document.readyState === "complete";
     const onLoad = () => {
       documentReady = true;
     };
     window.addEventListener("load", onLoad);
 
+    const images = IMAGE_MANIFEST.map((src) => {
+      const img = new Image();
+      const settle = () => {
+        loadedImages += 1;
+      };
+      img.onload = settle;
+      img.onerror = settle; // never let a broken texture wedge the loader
+      img.src = src;
+      return img;
+    });
+
     const tick = () => {
       const elapsed = performance.now() - startedAt.current;
+      const imageFraction = loadedImages / IMAGE_MANIFEST.length;
 
-      // The floor rises with time so the bar always advances, even when the
-      // real work finished instantly. The ceiling is the genuine state.
+      if (imageFraction >= 1) setImagesDone(true);
+
+      // The floor rises with time so the bar always advances; the ceiling is
+      // the genuine state: story images (the bulk) plus document readiness.
       const timeProgress = Math.min(elapsed / minDuration, 1);
-      const realProgress = documentReady && !active ? 1 : assetProgress / 100;
+      const realProgress = 0.8 * imageFraction + 0.2 * (documentReady ? 1 : 0);
       const next = Math.min(timeProgress, Math.max(realProgress, timeProgress * 0.85)) * 100;
 
       setProgress((current) => (next > current ? next : current));
@@ -57,8 +90,14 @@ export function useLoadingProgress() {
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener("load", onLoad);
+      // Dropping the references lets the browser abort in-flight fetches if
+      // the component unmounts (it normally never does before completion).
+      images.forEach((img) => {
+        img.onload = null;
+        img.onerror = null;
+      });
     };
-  }, [assetProgress, active]);
+  }, []);
 
-  return { progress, complete };
+  return { progress, complete, imagesDone };
 }
