@@ -3,11 +3,10 @@
 
    Fixed, viewport-anchored elements that the scroll story drives:
 
-     truck   THE element of the page. It takes over from the reveal video's
-             final frame (`#reveal-zone`) at matched size and position, then
-             drives down the page centre through Order, Ledger, Pipeline and
-             Journey (`#road`), and finally shrinks away as the camera keeps
-             rising into the flight zone.
+     truck   THE element of the page. It emerges from the reveal's zoom-out
+             (`#reveal-zone`), drives down the page centre through Order,
+             Ledger, Pipeline and Journey (`#road`), and finally exits by
+             driving off the bottom edge as the flight zone takes over.
      field   an aerial farmland backdrop behind the Updates + Features
              sections (`#flight-zone`), with a slow parallax drift.
      clouds  two copies of the same clouds-on-black image, screen-blended so
@@ -23,16 +22,15 @@
    cloud-front(4) < truck(5) < section content(10).
 
    THE REVEAL TIMELINE lives here (not in Beat1bReveal) because its star is
-   the truck. There is NO crossfade in the reveal: the curtain the visitor
-   has been staring at IS the reveal video's first frame, so switching the
-   video stack on at pin start changes nothing on screen — the picture just
-   starts moving. The scroll then scrubs the drone rise; at the apex a white
-   wash brightens the frame and the fixed sprite truck fades in matched to
-   the video truck's final size and position, then eases to driving size.
+   the truck: face push-in, white exposure flash, and under full flash cover
+   the sprite appears at container-filling scale, easing down to driving
+   size over the rolling ground. The still and the sprite never share the
+   screen — a crossfade between container textures read as double exposure.
 
-   The truck drives down the CENTRE on desktop — the road sections keep
-   their middle column empty for it. On phones there is no empty centre, so
-   the truck takes a narrow lane near the right edge instead.
+   The truck drives down the CENTRE everywhere. On desktop the road
+   sections keep their middle column empty for it; on phones content is
+   full-width, so whenever a text block passes over the truck's zone the
+   truck softens to keep the words readable (see the dim triggers).
 
    Reduced motion: this component renders nothing. The flight-zone sections
    paint their own static field background; the story reads without vehicles.
@@ -134,7 +132,6 @@ export function JourneyLayers() {
         // scale, then the camera climbs: scale eases down to driving size.
         // The zoom pivots on the container (origin 50% 30%), y stays at
         // driveY throughout — the road timeline picks it up with zero jump.
-        // On phones the zoom starts centred and drifts into the edge lane.
         reveal.fromTo(
           truck.current,
           { autoAlpha: 0 },
@@ -145,13 +142,11 @@ export function JourneyLayers() {
           truck.current,
           {
             scale: () => (narrow() ? 5.5 : 3.5),
-            x: () => (narrow() ? -0.35 * window.innerWidth : 0),
             y: driveY,
             transformOrigin: "50% 30%",
           },
           {
             scale: 1,
-            x: 0,
             y: driveY,
             ease: "power2.inOut",
             duration: 0.64,
@@ -209,21 +204,10 @@ export function JourneyLayers() {
             { y: () => 0.38 * vh(), ease: "none", duration: 0.85, immediateRender: false },
             0,
           )
-          // Arriving at the field: on phones the truck drifts from its edge
-          // lane onto the road painted down the field's centre (no-op on
-          // desktop, where the lane IS the centre)...
-          .to(
-            truck.current,
-            {
-              x: () => (narrow() ? -0.35 * window.innerWidth : 0),
-              ease: "power1.inOut",
-              duration: 0.08,
-            },
-            0.76,
-          )
-          // ...then drives OFF THE BOTTOM EDGE of the screen — a physical
-          // exit, not a fade (owner: "it comes out of the screen"). The
-          // plane only enters after it is gone.
+          // Arriving at the field, the truck is already lined up with the
+          // road painted down its centre, and drives OFF THE BOTTOM EDGE of
+          // the screen — a physical exit, not a fade (owner: "it comes out
+          // of the screen"). The plane only enters after it is gone.
           .to(
             truck.current,
             { y: () => 1.3 * vh(), ease: "power1.in", duration: 0.16 },
@@ -242,6 +226,34 @@ export function JourneyLayers() {
         repeat: -1,
         ease: "sine.inOut",
       });
+
+      // MOBILE READABILITY. The truck drives the centre on phones too (the
+      // storyboard), where content is full-width — so text blocks pass right
+      // over it. While any block is inside the truck's zone the inner image
+      // softens; between blocks it comes back. The dim lives on the INNER
+      // element (the outer's opacity belongs to the journey timelines).
+      // Desktop's centre lane is empty by design, so narrow() gates it.
+      {
+        let overlaps = 0;
+        const applyDim = () => {
+          gsap.to(truckInner.current, {
+            opacity: narrow() && overlaps > 0 ? 0.22 : 1,
+            duration: 0.35,
+            overwrite: "auto",
+          });
+        };
+        gsap.utils.toArray<HTMLElement>("#road [data-lane]").forEach((el) =>
+          ScrollTrigger.create({
+            trigger: el,
+            start: "top 82%",
+            end: "bottom 25%",
+            onToggle: (self) => {
+              overlaps += self.isActive ? 1 : -1;
+              applyDim();
+            },
+          }),
+        );
+      }
 
       /* -- the flight zone: field + clouds ------------------------------- */
       const zone = document.getElementById("flight-zone");
@@ -412,7 +424,7 @@ export function JourneyLayers() {
       <div
         ref={truck}
         aria-hidden="true"
-        className="invisible fixed top-0 left-[85%] z-[5] pointer-events-none md:left-1/2"
+        className="invisible fixed top-0 left-1/2 z-[5] pointer-events-none"
       >
         <picture>
           <source srcSet="/media/sprite-truck-top.webp" type="image/webp" />

@@ -100,6 +100,10 @@ cover the still is swapped for the truck SPRITE at container-filling scale
 (desktop 3.5x / phones 5.5x centred, drifting into the edge lane), which
 then eases down to driving size — origin 50% 30% so the zoom pivots on the
 container, y at driveY throughout so the road picks it up with zero jump.
+The truck is CENTRED at every width (owner choice); on phones, where
+content is full-width, per-block ScrollTriggers dim the truck's inner
+image to 0.22 while any [data-lane] block crosses its zone so text stays
+readable, restoring it in empty stretches.
 Under the truck, `#reveal-ground` (a centred lane, edge-fade mask) rolls a
 seamless concrete loop (`fx-ground`, cut from white-graded Veo footage,
 mirror-tiled; `#reveal-ground-roll` translates one tile and repeats) —
