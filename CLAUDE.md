@@ -110,11 +110,12 @@ mirror-tiled; `#reveal-ground-roll` translates one tile and repeats) —
 constant drift that reads as driving. Veo footage was tried in this slot
 TWICE and retired: 1080px frames can never be sharp on a 1920px desktop,
 close-ups carry baked-in motion blur, and its world clashed with the page;
-the raw take stays at `reveal-rise-src.mp4` if ever needed. **The road**
+the raw take stays at `assets-src/reveal-rise-src.mp4` if ever needed. **The road**
 (`#road`): the SAME fixed truck (`JourneyLayers.tsx`) drives down the page
 centre through Order, Ledger, Pipeline and Journey — all four are light
 two-column sections with an empty centre lane (Beat 4's old dark pinned stage
-sequence is gone per the owner's direction; its images stay in public/media).
+sequence is gone per the owner's direction; its bg-* stills stay in
+public/media).
 The truck's y is identical at the reveal's end and the road's start, so the
 handoff is seamless both directions. At the road's end the field (which has
 a vertical ROAD painted down its centre — regenerate via the grade+road
