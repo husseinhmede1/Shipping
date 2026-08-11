@@ -224,12 +224,26 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
     const element = video.current;
     if (!element || staticMode || !activeSrc) return;
 
+    // A user gesture always unblocks a muted play on iOS — and scrolling IS
+    // a touch — so a refused prime is retried on the first interaction and
+    // the footage recovers almost immediately.
+    const retry = () => {
+      element
+        .play()
+        .then(() => element.pause())
+        .catch(() => {
+          /* still refused — the poster layer underneath carries the hero */
+        });
+    };
+
     const prime = () => {
       element
         .play()
         .then(() => element.pause())
         .catch(() => {
-          /* autoplay refused — the poster stays up, which is the right fallback */
+          // Autoplay refused (iOS Low Power Mode is the common cause).
+          window.addEventListener("touchstart", retry, { once: true, passive: true });
+          window.addEventListener("pointerdown", retry, { once: true });
         });
       ScrollTrigger.refresh();
     };
@@ -237,7 +251,11 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
     if (element.readyState >= 2) prime();
     else element.addEventListener("loadeddata", prime, { once: true });
 
-    return () => element.removeEventListener("loadeddata", prime);
+    return () => {
+      element.removeEventListener("loadeddata", prime);
+      window.removeEventListener("touchstart", retry);
+      window.removeEventListener("pointerdown", retry);
+    };
   }, [staticMode, activeSrc]);
 
   return (
@@ -255,9 +273,21 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
           className="absolute inset-0 -z-10 h-full w-full object-cover"
         />
       ) : (
-        <video
-          ref={video}
-          key={activeSrc ?? "idle"}
+        <>
+          {/* Poster safety net. iOS drops the native poster the moment the
+              scrub seeks, and if the decoder has no frame yet (Low Power
+              Mode blocks even muted play()) the element paints NOTHING —
+              a black hero, seen live on the deployed site. A real <img>
+              under the video means "no frame yet" shows the poster. */}
+          <img
+            src={POSTER_SRC}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 -z-20 h-full w-full object-cover"
+          />
+          <video
+            ref={video}
+            key={activeSrc ?? "idle"}
           src={activeSrc ?? undefined}
           poster={POSTER_SRC}
           muted
@@ -265,8 +295,9 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
           preload={activeSrc ? "auto" : "none"}
           aria-hidden="true"
           tabIndex={-1}
-          className="absolute inset-0 -z-10 h-full w-full object-cover"
-        />
+            className="absolute inset-0 -z-10 h-full w-full object-cover"
+          />
+        </>
       )}
 
       {/* Scrim. The footage is already graded down, so this only has to
