@@ -1,20 +1,29 @@
 /* ===========================================================================
    BEAT 0 — HERO
 
-   A full-bleed dock video pinned behind the opening lines. The video never
+   A full-bleed dock shot pinned behind the opening lines. The footage never
    plays: its frame is tied to scroll position, so it only moves when the
    visitor moves — forward or backward — and freezes the moment they stop.
 
    The three lines arrive in sequence as the pin advances. Line one is present
    from first paint and is never gated behind scroll; it is the LCP element.
 
+   FOOTAGE  Not a <video>. A folder of still frames drawn on a canvas (see
+   lib/frameSequence). Video seeking by scroll was unreliable — browsers
+   throttle seeks, Safari refuses them until the decoder holds a frame, iOS
+   Low Power Mode blocks the priming play() — and it showed as "the hero
+   sometimes does not move" (owner report). Frames either decoded or did
+   not; the nearest decoded one is always drawable, so the scrub can never
+   freeze. The frames are cut from a 4K Topaz upscale of the original
+   clip (assets-src/hero-dock-4k.mp4; owner: "super HD"), so the hero is
+   sharp on 2K/4K screens too.
+
    Degrades on two axes:
      - prefers-reduced-motion : poster still, every line visible, no pin.
      - under 768px            : the story still runs — the section pins and the
-       lines arrive in sequence exactly as on desktop. Only the video source
-       changes, to a lighter 720p file. If a mobile browser refuses to seek it,
-       the poster stays up and the story is unaffected, because the text
-       sequence does not depend on the video.
+       lines arrive in sequence exactly as on desktop. Only the frame set
+       changes, to a portrait centre crop that matches what object-cover
+       would show of the wide frame at a fraction of the bytes.
 
    EXIT  The section does not simply scroll away. Over the final stretch of the
    pin, a full-viewport yellow container face descends from the top and covers
@@ -27,19 +36,16 @@
    over once Beat 2 arrives — stacking, not event callbacks, which had a
    refresh-ordering trap.
 
-   LOADING  The video is NOT fetched during startup. Nothing is requested until
-   the preloader has finished and the browser reports idle, so the file never
-   competes with fonts, CSS or JavaScript for bandwidth. Measured: the hero text
-   paints in ~1s on every connection profile, while the desktop video takes 2s
-   on fibre and 20s on a slow line — so it must not be in that critical window.
-   Until it arrives the poster carries the hero, which is a fine outcome rather
-   than a broken one.
+   LOADING  The frames are NOT fetched during startup. Nothing is requested
+   until the preloader's own images are cached and the browser reports idle,
+   so they never compete with fonts, CSS or JavaScript for bandwidth. They
+   arrive coarse-to-fine (frame 0, then every 8th, 4th, 2nd, the rest), so
+   the scrub works within a second and sharpens as the rest lands. Until
+   frame 0 is in, the poster carries the hero.
 
-   ASSETS  public/media/hero-dock.mp4        1920x1080, 9.0MB  (desktop)
-           public/media/hero-dock-mobile.mp4 1280x720,  2.5MB  (<=767px)
-   Both are 12fps with EVERY frame a keyframe. That encode is what makes
-   seeking possible; a normally encoded file rebuilds from the previous
-   keyframe on each seek and stutters badly.
+   ASSETS  public/media/hero/d/0001..0096.webp  2560x1440 (desktop)
+           public/media/hero/m/0001..0072.webp  810x1440 portrait (<=767px)
+           Regenerate with assets-src/gen-hero-frames.py.
    =========================================================================== */
 
 import { useEffect, useRef, useState } from "react";
@@ -50,15 +56,22 @@ import { brand } from "@/brand/brand.config";
 import { copy } from "@/content/copy";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { useIsMobile } from "@/lib/useMediaQuery";
+import {
+  createFrameLoader,
+  drawCover,
+  fitCanvas,
+  type FrameLoader,
+  type FrameSet,
+} from "@/lib/frameSequence";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const VIDEO_SRC = "/media/hero-dock.mp4";
-const MOBILE_VIDEO_SRC = "/media/hero-dock-mobile.mp4";
+const DESKTOP_FRAMES: FrameSet = { base: "/media/hero/d", count: 96 };
+const MOBILE_FRAMES: FrameSet = { base: "/media/hero/m", count: 72 };
 const POSTER_SRC = "/media/hero-dock-poster.jpg";
 
 type Beat0HeroProps = {
-  /** True once the preloader has finished. Gates the video download. */
+  /** True once the preloader has finished. Gates the frame download. */
   ready?: boolean;
 };
 
@@ -66,21 +79,38 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
   const reducedMotion = useReducedMotion();
   const isMobile = useIsMobile();
 
-  // Only reduced motion disables the story. Screen size changes the video file
-  // and the pin length, never whether the sequence runs at all.
+  // Only reduced motion disables the story. Screen size changes the frame
+  // set and the pin length, never whether the sequence runs at all.
   const staticMode = reducedMotion;
-  const videoSrc = isMobile ? MOBILE_VIDEO_SRC : VIDEO_SRC;
+  const frameSet = isMobile ? MOBILE_FRAMES : DESKTOP_FRAMES;
 
-  // Empty until we choose to start fetching. A <video> with no src simply shows
-  // its poster, so the hero looks finished the whole time.
-  const [activeSrc, setActiveSrc] = useState<string | null>(null);
+  // Null until we choose to start fetching. An empty canvas is transparent,
+  // so the poster underneath shows and the hero looks finished the whole time.
+  const [activeSet, setActiveSet] = useState<FrameSet | null>(null);
 
   const root = useRef<HTMLElement>(null);
-  const video = useRef<HTMLVideoElement>(null);
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const loader = useRef<FrameLoader | null>(null);
+  const progress = useRef(0);
   const eyebrow = useRef<HTMLParagraphElement>(null);
   const headline = useRef<HTMLHeadingElement>(null);
   const subhead = useRef<HTMLParagraphElement>(null);
   const actions = useRef<HTMLDivElement>(null);
+
+  /* -- paint the frame for the current scroll position ---------------------
+     Called from the scrub, from every frame arrival and from resizes. Cheap:
+     one drawImage of an already-decoded bitmap.                             */
+  const draw = () => {
+    const el = canvas.current;
+    const set = activeSet;
+    const frames = loader.current;
+    if (!el || !set || !frames) return;
+    fitCanvas(el);
+    const img = frames.nearest(progress.current * (set.count - 1));
+    if (img) drawCover(el, img);
+  };
+  const drawRef = useRef(draw);
+  drawRef.current = draw;
 
   /* -- on arrival: eyebrow AND headline ------------------------------------
      Both are time-based, never scroll-gated. A visitor who never scrolls must
@@ -115,11 +145,11 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
 
     let cancelled = false;
     const begin = () => {
-      if (!cancelled) setActiveSrc(videoSrc);
+      if (!cancelled) setActiveSet(frameSet);
     };
 
     // requestIdleCallback waits for a genuine gap in the main thread. The
-    // short timeout is the backstop: `ready` now fires while the preloader
+    // short timeout is the backstop: `ready` fires while the preloader
     // globe is still animating (images cached — see Preloader onWarm), and
     // the globe's rAF loop keeps the thread busy enough that real idle
     // rarely arrives — so in practice this IS the start delay.
@@ -137,7 +167,25 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [ready, staticMode, videoSrc]);
+  }, [ready, staticMode, frameSet]);
+
+  /* -- load the frames, repaint as they land, follow resizes --------------- */
+  useEffect(() => {
+    const el = canvas.current;
+    if (!el || staticMode || !activeSet) return;
+
+    const frames = createFrameLoader(activeSet, () => drawRef.current());
+    loader.current = frames;
+
+    const ro = new ResizeObserver(() => drawRef.current());
+    ro.observe(el);
+
+    return () => {
+      ro.disconnect();
+      frames.cancel();
+      loader.current = null;
+    };
+  }, [staticMode, activeSet]);
 
   /* -- the pinned scroll sequence ------------------------------------------ */
   useEffect(() => {
@@ -151,27 +199,32 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
           // The final ~30% of the pin is the container-curtain descent.
           end: isMobile ? "+=375%" : "+=490%",
           pin: true,
-          scrub: 0.8,
+          // Exact, not lagged: the curtain must be fully down the instant
+          // the pin releases (a numeric scrub let the reveal's canvas outlive
+          // its pin — same trap). Lenis already smooths the scroll.
+          scrub: true,
           anticipatePin: 1,
         },
       });
 
-      // Drive a proxy value across the pin and map it onto the video, rather
-      // than tweening currentTime directly. Two reasons: the file may not have
-      // arrived yet (deferred download), and duration is unknown until metadata
-      // lands — so the tween must not bake either in at build time. While the
-      // video is missing or unready this is simply a no-op and the poster
-      // stays up; the text sequence is unaffected either way.
+      // Drive a proxy value across the pin and map it onto the frames. The
+      // frames may not have arrived yet (deferred download); while none are
+      // in this is a no-op and the poster stays up. The text sequence never
+      // depends on it.
+      // The footage runs right up to the moment the curtain starts (position
+      // 1.0 below), so the last frame is what the container is lowered onto.
+      // (The old video scrub left this at GSAP's default 0.5 and the shot
+      // froze a third of the way through the pin.)
       const playhead = { progress: 0 };
       timeline.to(
         playhead,
         {
           progress: 1,
           ease: "none",
+          duration: 1.0,
           onUpdate: () => {
-            const media = video.current;
-            if (!media || media.readyState < 1 || !media.duration) return;
-            media.currentTime = playhead.progress * media.duration;
+            progress.current = playhead.progress;
+            drawRef.current();
           },
         },
         0,
@@ -210,53 +263,10 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
           1.0,
         );
       }
-
     }, root);
 
     return () => context.revert();
   }, [staticMode, isMobile]);
-
-  /* -- prime the decoder ---------------------------------------------------
-     Browsers will not seek a video that has never been handed to the decoder.
-     A muted play/pause once metadata arrives primes it, so the first scroll
-     shows a frame instead of an empty rectangle.                             */
-  useEffect(() => {
-    const element = video.current;
-    if (!element || staticMode || !activeSrc) return;
-
-    // A user gesture always unblocks a muted play on iOS — and scrolling IS
-    // a touch — so a refused prime is retried on the first interaction and
-    // the footage recovers almost immediately.
-    const retry = () => {
-      element
-        .play()
-        .then(() => element.pause())
-        .catch(() => {
-          /* still refused — the poster layer underneath carries the hero */
-        });
-    };
-
-    const prime = () => {
-      element
-        .play()
-        .then(() => element.pause())
-        .catch(() => {
-          // Autoplay refused (iOS Low Power Mode is the common cause).
-          window.addEventListener("touchstart", retry, { once: true, passive: true });
-          window.addEventListener("pointerdown", retry, { once: true });
-        });
-      ScrollTrigger.refresh();
-    };
-
-    if (element.readyState >= 2) prime();
-    else element.addEventListener("loadeddata", prime, { once: true });
-
-    return () => {
-      element.removeEventListener("loadeddata", prime);
-      window.removeEventListener("touchstart", retry);
-      window.removeEventListener("pointerdown", retry);
-    };
-  }, [staticMode, activeSrc]);
 
   return (
     <section
@@ -274,28 +284,18 @@ export function Beat0Hero({ ready = false }: Beat0HeroProps) {
         />
       ) : (
         <>
-          {/* Poster safety net. iOS drops the native poster the moment the
-              scrub seeks, and if the decoder has no frame yet (Low Power
-              Mode blocks even muted play()) the element paints NOTHING —
-              a black hero, seen live on the deployed site. A real <img>
-              under the video means "no frame yet" shows the poster. */}
+          {/* Poster underneath: shows until frame 0 is decoded, and stays
+              as the safety net if the frames never arrive. */}
           <img
             src={POSTER_SRC}
             alt=""
             aria-hidden="true"
             className="absolute inset-0 -z-20 h-full w-full object-cover"
           />
-          <video
-            ref={video}
-            key={activeSrc ?? "idle"}
-          src={activeSrc ?? undefined}
-          poster={POSTER_SRC}
-          muted
-          playsInline
-          preload={activeSrc ? "auto" : "none"}
-          aria-hidden="true"
-          tabIndex={-1}
-            className="absolute inset-0 -z-10 h-full w-full object-cover"
+          <canvas
+            ref={canvas}
+            aria-hidden="true"
+            className="absolute inset-0 -z-10 h-full w-full"
           />
         </>
       )}

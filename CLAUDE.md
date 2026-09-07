@@ -59,9 +59,13 @@ preloader globe and the reveal's drone shot)
   focus states, keyboard-reachable CTAs.
 - **Performance.** Compress images before committing. Keep the hero LCP fast;
   lazy-load anything below the fold.
-- **Backgrounds: prefer stills over video.** The graded images in
-  `public/media/bg-*.webp` are ~60–130KB each against 9MB for the hero video,
-  and they are sharper. Video is for the hero only.
+- **Backgrounds: stills, never `<video>`.** The graded images in
+  `public/media/bg-*.webp` are ~60–130KB each and sharper than any video
+  frame. The hero's scroll-scrubbed footage is a FRAME SEQUENCE drawn on a
+  canvas (`lib/frameSequence.ts`), not a video: seeking a `<video>` by scroll
+  was unreliable (throttled seeks, Safari refusing until the decoder holds a
+  frame, iOS Low Power Mode blocking the priming play()) and the owner saw
+  it freeze. There is no `<video>` left on the page.
 - Each beat is one file in `src/beats/` with a header comment describing what it
   does, what the motion should be, and where real assets get swapped in.
 
@@ -90,7 +94,13 @@ pnpm preview     # serve the production build locally
 ## Current state
 
 The page is one continuous "drone shot" — ONE truck element, no camera cuts.
-**Beat 0**: a scroll-scrubbed dock video pinned behind the opening lines; at
+**Beat 0**: a scroll-scrubbed dock shot pinned behind the opening lines —
+96 desktop frames (2560x1440) / 72 portrait phone frames (810x1440) in
+`public/media/hero/{d,m}/`, cut by `assets-src/gen-hero-frames.py` from a
+4K Topaz upscale of the original clip (Higgsfield, 8 credits;
+`assets-src/hero-dock-4k.mp4` — the frames zip is the owner's download at
+Higgsfield media 993b91d5 if the master is missing), loaded coarse-to-fine
+after the preloader, footage spanning the pin up to the curtain start; at
 the end of its pin a yellow container face (`#container-curtain`, rendered in
 App, driven by the hero's timeline) descends over the hero and becomes Beat
 1's fixed background (the high-res face texture — sharp fullscreen, which
