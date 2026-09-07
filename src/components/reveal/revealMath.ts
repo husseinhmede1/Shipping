@@ -11,7 +11,14 @@
    worlds (3D and DOM) can never drift apart.
 --------------------------------------------------------------------------- */
 
-export const FOV = 26; // telephoto-ish: a drone with a long lens, little distortion
+export const FOV = 26; // at the wall: a drone with a long lens, little distortion
+/** At the top the lens goes VERY long. With a 26° lens the roof (h above
+    the ground) rendered 6% larger than the wheels, so the last 3D frame and
+    the flat DOM sprite could never match and their crossfade ghosted. At
+    1.5° the difference is a third of a percent — under a pixel. */
+export const FOV_END = 1.5;
+const tanHalf = (fovDeg: number) => Math.tan(((fovDeg / 2) * Math.PI) / 180);
+const HALF_TURN = Math.PI / 2;
 
 /** sprite-truck-top.png, pixels */
 export const SPRITE_W = 574;
@@ -62,7 +69,7 @@ export const DRIVE_Y_FRACTION = 0.3;
     is precisely how the fixed curtain (object-cover of a wide image) shows
     the same texture. Same crop, same scale: an invisible switch. */
 export function startCamera() {
-  const th = Math.tan(((FOV / 2) * Math.PI) / 180);
+  const th = tanHalf(FOV);
   const d0 = CONTAINER.h / (2 * th);
   const target = { x: CONTAINER.cx + CONTAINER.w / 2, y: CONTAINER.h / 2, z: CONTAINER.cz };
   return { d0, target };
@@ -72,7 +79,7 @@ export function startCamera() {
     exactly the DOM sprite's rectangle (centred, top at 0.3vh, width per the
     clamp). d1 = distance, tz = where the camera looks on the plane. */
 export function endCamera(vw: number, vh: number) {
-  const th = Math.tan(((FOV / 2) * Math.PI) / 180);
+  const th = tanHalf(FOV_END);
   const wPx = spriteWidthPx(vw, vh);
   const hPx = (wPx * SPRITE_H) / SPRITE_W;
   const k = hPx / L; // screen px per world unit at the plane
@@ -80,6 +87,23 @@ export function endCamera(vw: number, vh: number) {
   const spriteCentreY = DRIVE_Y_FRACTION * vh + hPx / 2;
   const tz = -(spriteCentreY - vh / 2) / k; // look-at offset so the truck sits lower than centre
   return { d1, tz, hPx, wPx };
+}
+
+/** The whole camera path, one value in. Framing (screen px per world unit
+    at the point the camera looks at) shrinks GEOMETRICALLY — the same
+    fraction of size lost per unit of scroll, a steady climb — while the
+    lens narrows linearly; the distance falls out of the two. Pitch and
+    azimuth both sweep 0 -> 90°: rise, tilt, turn. */
+export function cameraAt(t: number, vw: number, vh: number) {
+  const { target: c0 } = startCamera();
+  const { tz, hPx } = endCamera(vw, vh);
+  const fov = FOV + (FOV_END - FOV) * t;
+  const k0 = vh / CONTAINER.h;
+  const k1 = hPx / L;
+  const k = k0 * Math.pow(k1 / k0, t);
+  const r = vh / (2 * tanHalf(fov) * k);
+  const centre = { x: c0.x * (1 - t), y: c0.y * (1 - t), z: c0.z + (tz - c0.z) * t };
+  return { fov, r, centre, pitch: HALF_TURN * t, azimuth: HALF_TURN * t };
 }
 
 /** Perspective makes the elevated roof render this much larger than the

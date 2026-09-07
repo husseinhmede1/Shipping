@@ -42,8 +42,7 @@ import {
   PLANE_W,
   SPRITE_H,
   SPRITE_W,
-  endCamera,
-  startCamera,
+  cameraAt,
 } from "./revealMath";
 
 const FACE_URL = "/media/bg-container-face.webp";
@@ -55,7 +54,6 @@ useTexture.preload(FACE_URL);
 useTexture.preload(SPRITE_URL);
 
 const POLE = (89.5 * Math.PI) / 180;
-const HALF = Math.PI / 2;
 
 /**
  * The cab's side panel, painted once: the sprite only has a top view, and a
@@ -173,40 +171,30 @@ function Scene() {
 
   useFrame(({ camera, size }) => {
     const t = revealProgress.get();
-    const { d0, target: c0 } = startCamera();
-    const { d1, tz } = endCamera(size.width, size.height);
-
-    // Orbit centre, radius, pitch and azimuth all travel together. The
-    // radius climbs geometrically, not linearly: the far distance is about
-    // eight times the near one, and a linear pull-back would spend that
-    // whole ratio in the first few percent (the wall visibly shrank away
-    // from the viewport edges within 20px of scroll). Geometric means the
-    // truck loses the same fraction of its size per unit of scroll — a
-    // steady climb, gentle at the wall, still moving at the top.
-    const cx = c0.x + (0 - c0.x) * t;
-    const cy = c0.y + (0 - c0.y) * t;
-    const cz = c0.z + (tz - c0.z) * t;
-    const r = d0 * Math.pow(d1 / d0, t);
-    const pitch = HALF * t;
-    const azimuth = HALF * t;
+    // Orbit centre, distance, lens, pitch and azimuth all travel together —
+    // see cameraAt for why the framing is geometric and the lens narrows.
+    const { fov, r, centre, pitch, azimuth } = cameraAt(t, size.width, size.height);
 
     camera.position.set(
-      cx + r * Math.cos(pitch) * Math.cos(azimuth),
-      cy + r * Math.sin(pitch),
-      cz + r * Math.cos(pitch) * Math.sin(azimuth),
+      centre.x + r * Math.cos(pitch) * Math.cos(azimuth),
+      centre.y + r * Math.sin(pitch),
+      centre.z + r * Math.cos(pitch) * Math.sin(azimuth),
     );
     // Near the pole "up" must become the direction of travel (-Z), which is
     // also what the +Y up resolves to just before it — so the roll is
     // continuous and the cab ends at the bottom of the screen.
     if (pitch > POLE) camera.up.set(0, 0, -1);
     else camera.up.set(0, 1, 0);
-    camera.lookAt(cx, cy, cz);
+    camera.lookAt(centre.x, centre.y, centre.z);
 
+    // The lens changes every frame, and at the top the camera is hundreds
+    // of units out — keep the depth range tight around the truck so the
+    // depth buffer stays precise instead of spanning 0.1..far.
     const persp = camera as THREE.PerspectiveCamera;
-    if (persp.fov !== FOV) {
-      persp.fov = FOV;
-      persp.updateProjectionMatrix();
-    }
+    persp.fov = fov;
+    persp.near = Math.max(0.05, r - 3 * L);
+    persp.far = r + 3 * L;
+    persp.updateProjectionMatrix();
   });
 
   return (
@@ -255,7 +243,7 @@ export function RevealScene() {
         frameloop="demand"
         dpr={[1, 2]}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
-        camera={{ fov: FOV, near: 0.1, far: 300 }}
+        camera={{ fov: FOV, near: 0.1, far: 1000 }}
         style={{ background: "transparent" }}
       >
         <Suspense fallback={null}>

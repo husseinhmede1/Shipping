@@ -99,17 +99,20 @@ a Three.js scene (`components/reveal/RevealScene.tsx`, all numbers in
 `revealMath.ts`). The container is a textured box (face texture mirror-
 repeated and centred on its sides, the sprite's roof crop on top) standing
 on the flat truck sprite; the cab is a second box with canvas-painted sides.
-Scroll drives ONE camera path through `lib/revealProgress` (0..1 over the
-first 90% of a 140% pin): pitch and azimuth 0 -> 90° linear, radius
-GEOMETRIC (d0 * (d1/d0)^t — linear pull-back spent the whole 8x ratio in
-the first few percent) from d0, where the +X side fills the viewport height
-and is pixel-identical to the curtain's object-cover crop (the curtain ->
-canvas switch at pin start is invisible; measured ~1px in headless Chromium
-at both breakpoints), to d1, where the flat plane projects exactly onto the
-DOM sprite's rectangle at driveY. Last 10%: canvas fades out, the DOM truck
-fades in from `handoffScale` (the roof sits h above the ground plane, so
-perspective renders it d1/(d1-h) larger; origin at the viewport centre)
-down to 1, y at driveY throughout so the road picks it up with zero jump.
+Scroll drives ONE camera path (`cameraAt` in revealMath, fed through
+`lib/revealProgress`, 0..1 over the first 97% of a 140% pin): pitch and
+azimuth 0 -> 90° linear; framing (px per world unit) GEOMETRIC — a linear
+pull-back spent the whole 8x distance ratio in the first few percent; the
+lens narrows 26° -> 1.5° so perspective flattens as the drone climbs. At
+t=0 the +X side fills the viewport height, pixel-identical to the curtain's
+object-cover crop (the curtain -> canvas switch at pin start is invisible;
+measured ~1px in headless Chromium at both breakpoints). At t=1 the flat
+plane projects exactly onto the DOM sprite's rectangle at driveY, and with
+the 1.5° lens the roof (h above the ground) renders only ~0.3% larger than
+the wheels — under a pixel. Last 3% (~40px): canvas out, DOM truck in from
+`handoffScale` (~1.003, origin at the viewport centre) to 1, y at driveY
+throughout so the road picks it up with zero jump. A 10% crossfade with the
+26° lens (6% roof/wheel mismatch) ghosted into a blurred double truck.
 The truck is CENTRED at every width (owner choice); on phones, where
 content is full-width, per-block ScrollTriggers dim the truck's inner
 image to 0.22 while any [data-lane] block crosses its zone so text stays

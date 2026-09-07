@@ -102,8 +102,9 @@ export function JourneyLayers() {
           reveal.fromTo(backdrop, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, 0);
         }
 
-        // THE CAMERA. One proxy value 0..1 across 90% of the pin, handed to
+        // THE CAMERA. One proxy value 0..1 across 97% of the pin, handed to
         // the scene through revealProgress: rise, tilt, turn, pull back.
+        const ARC = 0.97;
         const cam = { t: 0 };
         reveal.fromTo(
           cam,
@@ -111,26 +112,29 @@ export function JourneyLayers() {
           {
             t: 1,
             ease: "none",
-            duration: 0.9,
+            duration: ARC,
             onUpdate: () => revealProgress.set(cam.t),
           },
           0,
         );
 
-        // THE HANDOFF (last 10%). The scene's final frame puts the flat truck
-        // exactly on the DOM sprite's rectangle; the canvas fades out while
-        // the sprite fades in. Perspective renders the elevated roof slightly
-        // larger than the flat plane, so the sprite starts at that scale
-        // (about the viewport centre, where the camera axis is) and eases to
-        // 1 — the climb visibly continues through the switch, no jump.
+        // THE HANDOFF (last 3%, ~40px of scroll). The scene's final frame is
+        // the flat truck on exactly the DOM sprite's rectangle — the lens has
+        // gone so long by then that the roof and the wheels render at the
+        // same scale (within a pixel; handoffScale is ~1.003). The canvas
+        // fades out as the sprite fades in over that short stretch, so any
+        // sub-pixel difference dissolves instead of popping. An earlier 10%
+        // crossfade with a 6% scale mismatch ghosted — the owner saw a
+        // blurred double truck.
+        const SWAP = 1 - ARC;
         if (canvas) {
-          reveal.to(canvas, { autoAlpha: 0, ease: "none", duration: 0.1 }, 0.9);
+          reveal.to(canvas, { autoAlpha: 0, ease: "none", duration: SWAP }, ARC);
         }
         reveal.fromTo(
           truck.current,
           { autoAlpha: 0 },
-          { autoAlpha: 1, ease: "none", duration: 0.1 },
-          0.9,
+          { autoAlpha: 1, ease: "none", duration: SWAP },
+          ARC,
         );
         reveal.fromTo(
           truck.current,
@@ -142,11 +146,11 @@ export function JourneyLayers() {
           {
             scale: 1,
             y: driveY,
-            ease: "power1.out",
-            duration: 0.1,
+            ease: "none",
+            duration: SWAP,
             immediateRender: false,
           },
-          0.9,
+          ARC,
         );
 
         // The ground fades in once the camera has lifted off the wall and out
@@ -210,15 +214,44 @@ export function JourneyLayers() {
 
       // Idle bob on the inner image so the truck never freezes solid.
       // Time-based, not scroll-based; the outer element owns scroll transforms.
-      gsap.to(truckInner.current, {
-        y: 5,
-        rotation: 0.5,
-        transformOrigin: "50% 30%",
-        duration: 2.4,
-        yoyo: true,
-        repeat: -1,
-        ease: "sine.inOut",
-      });
+      // Its AMPLITUDE is scroll-based: zero through the reveal, because the
+      // 3D truck does not bob and the handoff must land on it exactly (a
+      // 5px / 0.5° offset at the swap read as a glitch), ramping to full
+      // while the reveal zone scrolls away and the road arrives.
+      {
+        const bob = { v: 0, amp: 0 };
+        const inner = truckInner.current!;
+        gsap.set(inner, { transformOrigin: "50% 30%" });
+        const setY = gsap.quickSetter(inner, "y", "px");
+        const setRot = gsap.quickSetter(inner, "rotation", "deg");
+        const applyBob = () => {
+          setY(5 * bob.v * bob.amp);
+          setRot(0.5 * bob.v * bob.amp);
+        };
+        gsap.to(bob, {
+          v: 1,
+          duration: 2.4,
+          yoyo: true,
+          repeat: -1,
+          ease: "sine.inOut",
+          onUpdate: applyBob,
+        });
+        if (road) {
+          gsap.to(bob, {
+            amp: 1,
+            ease: "none",
+            onUpdate: applyBob,
+            scrollTrigger: {
+              trigger: road,
+              start: "top bottom",
+              end: "top top",
+              scrub: true,
+            },
+          });
+        } else {
+          bob.amp = 1;
+        }
+      }
 
       // MOBILE READABILITY. The truck drives the centre on phones too (the
       // storyboard), where content is full-width — so text blocks pass right
