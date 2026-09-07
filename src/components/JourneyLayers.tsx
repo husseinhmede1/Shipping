@@ -82,13 +82,20 @@ export function JourneyLayers() {
 
         // 140%, not more — the owner flagged the section-2-to-Order stretch
         // as a long scroll where nothing happens. Keep this tight.
+        //
+        // scrub: true, NOT a number. The pin engages and releases on the
+        // exact scroll position, but a numeric scrub lets the timeline lag
+        // behind by that many seconds — so a fast scroll past the end
+        // unpinned the section while the canvas was still mid-fade, and the
+        // 3D truck rode up the page beside the real one (owner screenshot).
+        // Lenis already smooths the scroll itself; no second smoothing.
         const reveal = gsap.timeline({
           scrollTrigger: {
             trigger: revealZone,
             start: "top top",
             end: "+=140%",
             pin: revealZone,
-            scrub: 0.8,
+            scrub: true,
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },
