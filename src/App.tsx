@@ -78,9 +78,9 @@ export default function App() {
             background. Lives here because it must not sit inside the pinned
             hero (transformed ancestors capture fixed children). z-20: above
             the hero, below Beat 1's content and the z-30 wrapper below.
-            The image is the high-res face texture — the reveal video's own
-            first frames were tried here and looked terrible on desktop
-            (1080px portrait footage, dark and soft when blown up). */}
+            The image is the high-res face texture; the reveal's 3D scene
+            opens on the very same crop of it, which is what makes the
+            curtain -> scene switch invisible. */}
         <div
           id="container-curtain"
           aria-hidden="true"
@@ -100,50 +100,14 @@ export default function App() {
           <div className="film-grain absolute inset-0" />
         </div>
 
-        {/* A second copy of the face for the reveal's take-off push-in. At
-            reveal pin start it switches on over everything (identical pixels
-            to the curtain = invisible switch), scales up as the "drone"
-            pushes off the wall, and is swapped for the moving footage under
-            full cover of the white flash below. z-40: above the z-30
-            sections, below the z-50 header. */}
-        <div
-          id="face-zoom"
-          aria-hidden="true"
-          className="invisible fixed inset-0 z-40 pointer-events-none"
-        >
-          <picture>
-            <source srcSet="/media/bg-container-face.webp" type="image/webp" />
-            <img
-              src="/media/bg-container-face.jpg"
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className="h-full w-full object-cover"
-            />
-          </picture>
-          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
-          <div className="film-grain absolute inset-0" />
-        </div>
-
-        {/* The exposure flash: a beat of pure white as the drone clears the
-            container's shadow into sunlight. It reaches FULL opacity for a
-            moment — that moment is when the sharp still is swapped for the
-            moving footage, so the two never overlap on screen (a crossfade
-            between them read as a double exposure). z-[45]: above face-zoom,
-            below the header. */}
-        <div
-          id="reveal-flash"
-          aria-hidden="true"
-          className="pointer-events-none fixed inset-0 z-[45] bg-white opacity-0"
-        />
 
         <Beat1Chaos />
 
-        {/* The drone-rise reveal: a transparent pinned viewport. The zoom
-            itself — face shrinking into the truck's container — is driven by
-            JourneyLayers, whose fixed truck is the star of the scene. Sits
-            OUTSIDE the opaque wrapper so the curtain face stays visible right
-            up to the pin. */}
+        {/* The drone-shot reveal: a pinned viewport holding the 3D scene
+            that turns the container wall into the top-down truck. Its camera
+            is driven by JourneyLayers, whose fixed truck takes over at the
+            top. Sits OUTSIDE the opaque wrapper so the curtain face stays
+            visible right up to the pin. */}
         <Beat1bReveal />
 
         {/* Opaque wrapper above the fixed container-face curtain (z-20).

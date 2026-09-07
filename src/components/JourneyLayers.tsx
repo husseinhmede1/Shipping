@@ -3,8 +3,8 @@
 
    Fixed, viewport-anchored elements that the scroll story drives:
 
-     truck   THE element of the page. It emerges from the reveal's zoom-out
-             (`#reveal-zone`), drives down the page centre through Order,
+     truck   THE element of the page. It takes over from the reveal's 3D
+             drone shot (`#reveal-zone`), drives down the page centre through Order,
              Ledger, Pipeline and Journey (`#road`), and finally exits by
              driving off the bottom edge as the flight zone takes over.
      field   an aerial farmland backdrop behind the Updates + Features
@@ -22,10 +22,11 @@
    cloud-front(4) < truck(5) < section content(10).
 
    THE REVEAL TIMELINE lives here (not in Beat1bReveal) because its star is
-   the truck: face push-in, white exposure flash, and under full flash cover
-   the sprite appears at container-filling scale, easing down to driving
-   size over the rolling ground. The still and the sprite never share the
-   screen — a crossfade between container textures read as double exposure.
+   the truck: one proxy value drives the 3D camera (components/reveal) from
+   the container wall to straight above the truck, and in the last 10% the
+   canvas hands over to this fixed sprite at exactly the size and place the
+   3D truck holds. Both switches are pixel-matched — a crossfade between two
+   different renderings of the container read as double exposure.
 
    The truck drives down the CENTRE everywhere. On desktop the road
    sections keep their middle column empty for it; on phones content is
@@ -41,6 +42,8 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { useReducedMotion } from "@/lib/useReducedMotion";
+import { revealProgress } from "@/lib/revealProgress";
+import { handoffOriginY, handoffScale } from "@/components/reveal/revealMath";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -70,12 +73,11 @@ export function JourneyLayers() {
       gsap.set(truck.current, { xPercent: -50, transformOrigin: "50% 50%" });
       gsap.set(plane.current, { xPercent: -50 });
 
-      /* -- the reveal: take-off, flash, sprite zoom-out ------------------- */
+      /* -- the reveal: the 3D drone shot ----------------------------------- */
       const revealZone = document.getElementById("reveal-zone");
       if (revealZone) {
         const backdrop = document.getElementById("reveal-backdrop");
-        const face = document.getElementById("face-zoom");
-        const flash = document.getElementById("reveal-flash");
+        const canvas = document.getElementById("reveal-canvas");
         const groundRoll = document.getElementById("reveal-ground-roll");
 
         // 140%, not more — the owner flagged the section-2-to-Order stretch
@@ -92,73 +94,64 @@ export function JourneyLayers() {
           },
         });
 
-        // The white world switches on at pin start, hidden under face-zoom.
+        // The scene switches on at pin start. Invisible: at t=0 the 3D
+        // container side renders the same crop of the same texture at the
+        // same scale as the fixed curtain behind it (see RevealScene).
         // fromTo (never .set) so scrubbing back above the pin restores it.
         if (backdrop) {
           reveal.fromTo(backdrop, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, 0);
         }
 
-        // TAKE-OFF. The sharp face still (identical to the curtain, so the
-        // switch-on is invisible) pushes in as the drone lifts off the wall...
-        if (face) {
-          reveal.fromTo(face, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.001 }, 0);
-          reveal.fromTo(
-            face,
-            { scale: 1, transformOrigin: "50% 50%" },
-            { scale: 1.55, ease: "power2.in", duration: 0.24, immediateRender: false },
-            0.02,
-          );
-          // ...and is dropped ONLY while the flash below is at full white —
-          // the still and the truck never share the screen. A crossfade
-          // between container textures read as a double exposure.
-          reveal.to(face, { autoAlpha: 0, ease: "none", duration: 0.02 }, 0.27);
-        }
+        // THE CAMERA. One proxy value 0..1 across 90% of the pin, handed to
+        // the scene through revealProgress: rise, tilt, turn, pull back.
+        const cam = { t: 0 };
+        reveal.fromTo(
+          cam,
+          { t: 0 },
+          {
+            t: 1,
+            ease: "none",
+            duration: 0.9,
+            onUpdate: () => revealProgress.set(cam.t),
+          },
+          0,
+        );
 
-        // The exposure flash: blows out to full white as the drone clears
-        // the container's shadow into sunlight, then clears onto the truck
-        // already below — container roof forward, ground sliding past.
-        if (flash) {
-          reveal
-            .fromTo(
-              flash,
-              { opacity: 0 },
-              { opacity: 1, ease: "power2.in", duration: 0.1 },
-              0.17,
-            )
-            .to(flash, { opacity: 0, ease: "power1.out", duration: 0.12 }, 0.3);
+        // THE HANDOFF (last 10%). The scene's final frame puts the flat truck
+        // exactly on the DOM sprite's rectangle; the canvas fades out while
+        // the sprite fades in. Perspective renders the elevated roof slightly
+        // larger than the flat plane, so the sprite starts at that scale
+        // (about the viewport centre, where the camera axis is) and eases to
+        // 1 — the climb visibly continues through the switch, no jump.
+        if (canvas) {
+          reveal.to(canvas, { autoAlpha: 0, ease: "none", duration: 0.1 }, 0.9);
         }
-
-        // The truck appears under full flash cover at container-filling
-        // scale, then the camera climbs: scale eases down to driving size.
-        // The zoom pivots on the container (origin 50% 30%), y stays at
-        // driveY throughout — the road timeline picks it up with zero jump.
         reveal.fromTo(
           truck.current,
           { autoAlpha: 0 },
-          { autoAlpha: 1, duration: 0.02 },
-          0.28,
+          { autoAlpha: 1, ease: "none", duration: 0.1 },
+          0.9,
         );
         reveal.fromTo(
           truck.current,
           {
-            scale: () => (narrow() ? 5.5 : 3.5),
+            scale: () => handoffScale(window.innerWidth, vh()),
             y: driveY,
-            transformOrigin: "50% 30%",
+            transformOrigin: () => `50% ${handoffOriginY(vh())}px`,
           },
           {
             scale: 1,
             y: driveY,
-            ease: "power2.inOut",
-            duration: 0.64,
+            ease: "power1.out",
+            duration: 0.1,
             immediateRender: false,
           },
-          0.3,
+          0.9,
         );
-        // The last 6% is the un-pin ramp — no hold; the road takes over
-        // immediately so the empty-white stretch stays short.
 
-        // The ground fades in with the flash-clear and out near the top of
-        // the climb (high enough that surface texture disappears).
+        // The ground fades in once the camera has lifted off the wall and out
+        // near the top of the climb (high enough that surface texture
+        // disappears).
         if (groundRoll) {
           const groundLane = groundRoll.parentElement;
           reveal

@@ -21,7 +21,8 @@ generic SaaS filler.
 ## Stack
 
 Vite · React 19 · TypeScript · Tailwind CSS v4 · GSAP + ScrollTrigger · Lenis ·
-Framer Motion · lucide-react
+Framer Motion · lucide-react · Three.js via @react-three/fiber + drei (the
+preloader globe and the reveal's drone shot)
 
 ## Rules
 
@@ -71,8 +72,9 @@ src/
   brand/     theme.css (all design tokens) · brand.config.ts (name, CTAs, contact)
   content/   copy.ts (every string on the page)
   beats/     Beat0Hero … Beat8Cta — one file per scroll beat
-  components/ shared layout primitives
-  lib/       useReducedMotion · useSmoothScroll · cn
+  components/ shared layout primitives · JourneyLayers (fixed travellers +
+             the reveal/road/flight timelines) · reveal/ (3D drone shot + math)
+  lib/       useReducedMotion · useSmoothScroll · revealProgress · cn
   assets/    screenshots/ — real product screenshots go here
 ```
 
@@ -92,25 +94,37 @@ The page is one continuous "drone shot" — ONE truck element, no camera cuts.
 the end of its pin a yellow container face (`#container-curtain`, rendered in
 App, driven by the hero's timeline) descends over the hero and becomes Beat
 1's fixed background (the high-res face texture — sharp fullscreen, which
-video frames can never be). **Beat 1b (reveal)**: the take-off, sprite
-edition. At pin start `#face-zoom` (fixed z-40 copy of the curtain,
-invisible switch) pushes in (scale 1 -> 1.55), the frame blows out to a
-full-white exposure flash (`#reveal-flash`, z-45), and under TOTAL flash
-cover the still is swapped for the truck SPRITE at container-filling scale
-(desktop 3.5x / phones 5.5x centred, drifting into the edge lane), which
-then eases down to driving size — origin 50% 30% so the zoom pivots on the
-container, y at driveY throughout so the road picks it up with zero jump.
+video frames can never be). **Beat 1b (reveal)**: the take-off, for real —
+a Three.js scene (`components/reveal/RevealScene.tsx`, all numbers in
+`revealMath.ts`). The container is a textured box (face texture mirror-
+repeated and centred on its sides, the sprite's roof crop on top) standing
+on the flat truck sprite; the cab is a second box with canvas-painted sides.
+Scroll drives ONE camera path through `lib/revealProgress` (0..1 over the
+first 90% of a 140% pin): pitch and azimuth 0 -> 90° linear, radius
+GEOMETRIC (d0 * (d1/d0)^t — linear pull-back spent the whole 8x ratio in
+the first few percent) from d0, where the +X side fills the viewport height
+and is pixel-identical to the curtain's object-cover crop (the curtain ->
+canvas switch at pin start is invisible; measured ~1px in headless Chromium
+at both breakpoints), to d1, where the flat plane projects exactly onto the
+DOM sprite's rectangle at driveY. Last 10%: canvas fades out, the DOM truck
+fades in from `handoffScale` (the roof sits h above the ground plane, so
+perspective renders it d1/(d1-h) larger; origin at the viewport centre)
+down to 1, y at driveY throughout so the road picks it up with zero jump.
 The truck is CENTRED at every width (owner choice); on phones, where
 content is full-width, per-block ScrollTriggers dim the truck's inner
 image to 0.22 while any [data-lane] block crosses its zone so text stays
 readable, restoring it in empty stretches.
 Under the truck, `#reveal-ground` (a centred lane, edge-fade mask) rolls a
-seamless concrete loop (`fx-ground`, cut from white-graded Veo footage,
-mirror-tiled; `#reveal-ground-roll` translates one tile and repeats) —
-constant drift that reads as driving. Veo footage was tried in this slot
-TWICE and retired: 1080px frames can never be sharp on a 1920px desktop,
-close-ups carry baked-in motion blur, and its world clashed with the page;
-the raw take stays at `assets-src/reveal-rise-src.mp4` if ever needed. **The road**
+seamless near-white speckle loop (`fx-ground`, procedural — the concrete
+cut from footage carried a crack that read as a slanted line; base 241,
+fine + coarse noise, mirror-stacked; `#reveal-ground-roll` translates one
+tile and repeats) — constant drift that reads as driving. Veo footage was
+tried in this slot TWICE and retired: 1080px frames can never be sharp on a
+1920px desktop, close-ups carry baked-in motion blur, and its world clashed
+with the page; the raw take stays at `assets-src/reveal-rise-src.mp4`. Every
+earlier reveal (crossfade, face push-in + white flash, shrink-fade) was
+rejected by the owner: the brief is the SAME truck shrinking while the
+surface rotates horizontal -> vertical, like a drone. **The road**
 (`#road`): the SAME fixed truck (`JourneyLayers.tsx`) drives down the page
 centre through Order, Ledger, Pipeline and Journey — all four are light
 two-column sections with an empty centre lane (Beat 4's old dark pinned stage
@@ -140,8 +154,17 @@ road sections, ledger count-up, message stagger, feature-grid stagger.
 - **A fixed element inside a pinned section breaks after the pin releases.**
   GSAP leaves a transform on the pinned element, and a transformed ancestor
   becomes the containing block for fixed descendants. All fixed travellers
-  (curtain, face-zoom, truck, field, clouds, plane) live OUTSIDE every pinned
-  section, in App / JourneyLayers.
+  (curtain, truck, field, clouds, plane) live OUTSIDE every pinned
+  section, in App / JourneyLayers. The reveal's canvas is ABSOLUTE inside
+  its pinned section, which is fine — only fixed descendants break.
+- **Never crossfade two renderings of the container** (still <-> sprite,
+  video <-> still): the owner reads it as double exposure. A switch must be
+  pixel-identical (curtain -> canvas at t=0, canvas -> sprite at the end) —
+  verify with a screenshot pair, not by eye.
+- **The r3f Canvas runs `frameloop="demand"`**: it draws only on
+  `invalidate()`, which the scene calls from a `revealProgress` subscription.
+  Near the pole the camera's up vector must flip to (0,0,-1) (past 89.5°
+  pitch) or `lookAt` degenerates and the truck spins.
 - **ScrollTriggers refresh in CREATION order, not document order.** A trigger
   created before a pin that sits ABOVE it on the page measures its positions
   without that pin's spacer (~the pin's full length off). `ScrollTrigger.sort()`
